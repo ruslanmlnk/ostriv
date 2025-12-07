@@ -5,6 +5,7 @@ import { House, ChevronRight, Truck, User, Wallet } from 'lucide-react';
 import { useCart } from './CartContext';
 import { useNavigation } from './NavigationContext';
 import { api } from '../api';
+import UiImage from './UiImage';
 
 const UKRAINIAN_CITIES = [
   "Авдіївка", "Олександрія", "Олександрівськ", "Алмазна", "Алупка", "Алушта", "Алчевськ", "Ананьїв", "Андрушівка", "Антрацит", "Апостолове", "Армянськ", "Арциз",
@@ -244,7 +245,7 @@ const CheckoutPage: React.FC = () => {
                         {/* Image */}
                         <div className="col-span-1 md:col-span-3 flex justify-center md:justify-start">
                             <div className="w-20 h-20 flex items-center justify-center">
-                                <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
+                                <UiImage src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" width={120} height={120} />
                             </div>
                         </div>
                         {/* Name */}

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Star } from 'lucide-react';
+import UiImage from './UiImage';
 
 const POPULAR_ITEMS = [
   {
@@ -48,7 +49,7 @@ const SidebarWidgets: React.FC = () => {
           {POPULAR_ITEMS.map((item) => (
             <div key={item.id} className="flex gap-4 border-b border-gray-50 last:border-0 pb-4 last:pb-0">
               <div className="w-16 h-16 flex-shrink-0 border border-gray-100 p-1 flex items-center justify-center">
-                <img src={item.image} alt={item.name} className="max-w-full max-h-full object-contain" />
+                <UiImage src={item.image} alt={item.name} className="max-w-full max-h-full object-contain" width={100} height={100} />
               </div>
               <div className="flex flex-col">
                 <h4 className="text-[11px] font-bold text-gray-800 uppercase leading-tight mb-1">{item.name}</h4>
@@ -72,10 +73,13 @@ const SidebarWidgets: React.FC = () => {
       {/* Promo Widget */}
       <div className="w-full bg-gray-100 p-4 border border-gray-100 rounded-sm">
         <div className="mb-4 overflow-hidden rounded-sm">
-           <img 
-             src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
-             alt="Promo" 
+           <UiImage
+             src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+             alt="Promo"
              className="w-full h-40 object-cover"
+             width={600}
+             height={400}
+             sizes="100vw"
            />
         </div>
         <h3 className="text-sm font-bold uppercase text-gray-900 mb-2 leading-tight text-center">

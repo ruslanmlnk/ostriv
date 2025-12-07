@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import UiImage from './UiImage';
 
 const PromoSection: React.FC = () => {
   return (
@@ -31,10 +32,13 @@ const PromoSection: React.FC = () => {
 
         {/* Right Image */}
         <div className="w-full md:w-1/2 relative min-h-[300px]">
-            <img 
-                src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
-                alt="Warehouse worker" 
-                className="w-full h-full object-cover rounded-sm shadow-md"
+            <UiImage
+              src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+              alt="Warehouse worker"
+              className="w-full h-full object-cover rounded-sm shadow-md"
+              width={1000}
+              height={700}
+              sizes="100vw"
             />
         </div>
 

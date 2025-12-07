@@ -5,6 +5,7 @@ import SectionHeader from './SectionHeader';
 import { useNavigation } from './NavigationContext';
 import { getImageUrl } from '../api';
 import { useCategories } from './useCategories';
+import UiImage from './UiImage';
 
 const CategoryGrid: React.FC = () => {
   const { navigateTo } = useNavigation();
@@ -24,10 +25,13 @@ const CategoryGrid: React.FC = () => {
             {/* Image Side - Left */}
             <div className="w-[40%] flex justify-center items-center h-full">
               <div className="w-full h-full flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
-                <img 
-                  src={getImageUrl(cat.image)} 
-                  alt={cat.title} 
-                  className="max-h-full max-w-full object-contain" 
+                <UiImage
+                  src={getImageUrl(cat.image)}
+                  alt={cat.title}
+                  className="max-h-full max-w-full object-contain"
+                  width={400}
+                  height={300}
+                  sizes="33vw"
                 />
               </div>
             </div>

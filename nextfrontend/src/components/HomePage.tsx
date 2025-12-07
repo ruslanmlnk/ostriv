@@ -35,6 +35,7 @@ const HomePage: React.FC = () => {
     <>
       <Hero />
       <CategoryGrid /> 
+      {hitProducts.length > 0 && (
       <ProductSection 
         title="Хіти продажів" 
         subtitle="Топ із нашого каталогу" 
@@ -42,7 +43,9 @@ const HomePage: React.FC = () => {
         showButton 
         viewMode="grid"
       />
+      )}
       <PromoSection />
+      {newProducts.length > 0 && (
       <ProductSection 
         title="Нові надходження товарів" 
         subtitle="Свіже надходження" 
@@ -50,6 +53,7 @@ const HomePage: React.FC = () => {
         withArrows 
         viewMode="slider"
       />
+      )}
       <Features />
     </>
   );

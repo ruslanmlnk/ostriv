@@ -6,6 +6,7 @@ import { Product } from '../types';
 import { useNavigation } from './NavigationContext';
 import { getImageUrl } from '../api';
 import { useWishlist } from './WishlistContext';
+import UiImage from './UiImage';
 
 interface ProductCardProps {
   product: Product;
@@ -53,10 +54,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
       )}
       
       <div className="w-full h-[303px] flex items-center justify-center p-6 overflow-hidden">
-        <img 
-            src={getImageUrl(product.image)} 
-            alt={product.name} 
-            className="max-w-full max-h-full object-contain group-hover/card:scale-105 transition-transform duration-300"
+        <UiImage
+          src={getImageUrl(product.image)}
+          alt={product.name}
+          className="max-w-full max-h-full object-contain group-hover/card:scale-105 transition-transform duration-300"
+          width={500}
+          height={500}
+          sizes="(min-width: 1024px) 300px, 50vw"
         />
       </div>
 

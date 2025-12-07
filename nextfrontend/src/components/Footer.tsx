@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Facebook, Twitter, Instagram, Linkedin, Send, MapPin, Mail, Phone, Chrome } from 'lucide-react';
 import { useNavigation } from './NavigationContext';
 
@@ -103,9 +104,9 @@ const Footer: React.FC = () => {
           
           <div className="flex gap-2">
             {[Facebook, Twitter, Chrome, Instagram, Linkedin].map((Icon, i) => (
-              <a key={i} href="#" className="w-9 h-9 flex items-center justify-center border border-[#444] text-[#999] hover:border-amber-500 hover:text-amber-500 transition-colors">
+              <Link key={i} href="#" className="w-9 h-9 flex items-center justify-center border border-[#444] text-[#999] hover:border-amber-500 hover:text-amber-500 transition-colors">
                 <Icon size={16} />
-              </a>
+              </Link>
             ))}
           </div>
         </div>

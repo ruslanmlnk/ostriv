@@ -4,6 +4,7 @@ import React from 'react';
 import { Minus, Plus, X } from 'lucide-react';
 import { useCart } from './CartContext';
 import { useNavigation } from './NavigationContext';
+import UiImage from './UiImage';
 
 const CartPage: React.FC = () => {
   const { items, updateQuantity, removeFromCart, totalAmount } = useCart();
@@ -31,7 +32,7 @@ const CartPage: React.FC = () => {
               {/* Image */}
               <div className="col-span-1 md:col-span-3 flex justify-center md:justify-start">
                 <div className="w-24 h-32 flex items-center justify-center">
-                   <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
+                   <UiImage src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" width={200} height={260} />
                 </div>
               </div>
 

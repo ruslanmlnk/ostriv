@@ -8,6 +8,7 @@ import ProductCard from './ProductCard';
 import { CATALOG_PRODUCTS } from '../constants';
 import { useNavigation } from './NavigationContext';
 import { useCart } from './CartContext';
+import UiImage from './UiImage';
 
 const RELATED_PRODUCTS = CATALOG_PRODUCTS.slice(0, 4);
 
@@ -70,20 +71,24 @@ const ProductPage: React.FC = () => {
                 {/* Images Column */}
                 <div className="w-full md:w-1/2">
                     <div className="border border-gray-100 p-8 flex items-center justify-center mb-4 h-[400px]">
-                        <img 
-                            src="https://i.ibb.co/NdysLRCm/5f72290eb2e9285223eba7828a9153b2c9dcb3ed.png" 
-                            alt="Main Product" 
-                            className="max-h-full object-contain"
+                        <UiImage
+                          src="https://i.ibb.co/NdysLRCm/5f72290eb2e9285223eba7828a9153b2c9dcb3ed.png"
+                          alt="Main Product"
+                          className="max-h-full object-contain"
+                          width={700}
+                          height={600}
                         />
                     </div>
                     {/* Thumbnails */}
                     <div className="grid grid-cols-4 gap-4">
                         {[1, 2, 3, 4].map((item) => (
                              <div key={item} className="border border-gray-200 p-2 h-20 flex items-center justify-center cursor-pointer hover:border-amber-400 transition-colors">
-                                <img 
-                                    src="https://i.ibb.co/NdysLRCm/5f72290eb2e9285223eba7828a9153b2c9dcb3ed.png" 
-                                    alt={`Thumb ${item}`} 
-                                    className="max-h-full object-contain"
+                                <UiImage
+                                  src="https://i.ibb.co/NdysLRCm/5f72290eb2e9285223eba7828a9153b2c9dcb3ed.png"
+                                  alt={`Thumb ${item}`}
+                                  className="max-h-full object-contain"
+                                  width={120}
+                                  height={120}
                                 />
                              </div>
                         ))}

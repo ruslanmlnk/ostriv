@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 
 const CATEGORY_ITEMS = [
@@ -52,10 +53,10 @@ const SidebarCategories: React.FC = () => {
               <ul className="bg-gray-50 py-2">
                 {cat.items?.map((subItem, subIdx) => (
                   <li key={subIdx}>
-                    <a href="#" className="flex items-center gap-2 px-6 py-2 text-xs text-gray-500 hover:text-amber-500 transition-colors">
+                    <Link href="#" className="flex items-center gap-2 px-6 py-2 text-xs text-gray-500 hover:text-amber-500 transition-colors">
                       <ChevronRight size={12} className="text-gray-300" />
                       {subItem}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

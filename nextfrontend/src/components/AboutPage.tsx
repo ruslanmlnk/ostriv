@@ -3,6 +3,7 @@
 import React from 'react';
 import { House, ChevronRight, Award, Users, Smile, Clock, Target, Leaf, Truck } from 'lucide-react';
 import { useNavigation } from './NavigationContext';
+import UiImage from './UiImage';
 
 const AboutPage: React.FC = () => {
   const { navigateTo } = useNavigation();
@@ -52,10 +53,13 @@ const AboutPage: React.FC = () => {
         
         <div className="w-full lg:w-1/2">
             <div className="relative h-[400px] w-full rounded-sm overflow-hidden shadow-lg group">
-                <img 
-                    src="https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
-                    alt="Офіс Острів" 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                <UiImage
+                  src="https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                  alt="Офіс Острів"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  width={1000}
+                  height={700}
+                  sizes="100vw"
                 />
                 <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
             </div>
