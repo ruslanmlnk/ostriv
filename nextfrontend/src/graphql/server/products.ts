@@ -1,14 +1,8 @@
-'use client';
-
 import { Product } from '@/types';
 import { getImageUrl } from '@/api';
 import { graphqlClient } from '../client';
 import { GET_PRODUCTS } from '../queries/products';
 import { ProductsResponse, StrapiItem, StrapiProductAttributes } from '../types';
-
-type ProductKey = 'all' | 'hit' | 'new';
-const productCache: Record<string, Product[]> = {};
-const productPromises: Record<string, Promise<Product[]> | undefined> = {};
 
 const normalizeProduct = (
   item: StrapiItem<StrapiProductAttributes> | StrapiProductAttributes
@@ -45,12 +39,7 @@ const normalizeProduct = (
   };
 };
 
-export const fetchProducts = async (type: ProductKey = 'all', categorySlug?: string): Promise<Product[]> => {
-  const cacheKey = `${type}:${categorySlug ?? 'all'}`;
-  if (productCache[cacheKey]) return productCache[cacheKey];
-  const existingPromise = productPromises[cacheKey];
-  if (existingPromise) return existingPromise;
-
+export const fetchProductsServer = async (type: 'all' | 'hit' | 'new' = 'all', categorySlug?: string): Promise<Product[]> => {
   const typeFilters =
     type === 'hit'
       ? { isHit: { eq: true } }
@@ -67,29 +56,35 @@ export const fetchProducts = async (type: ProductKey = 'all', categorySlug?: str
     ? { filters, ...(type === 'new' ? { sort: ['createdAt:desc'] } : {}) }
     : (type === 'new' ? { sort: ['createdAt:desc'] } : {});
 
-  const promise = graphqlClient.request<ProductsResponse>(GET_PRODUCTS, variables)
-    .then((data) => {
-      const raw = Array.isArray(data.products)
-        ? data.products
-        : Array.isArray((data.products as any)?.data)
-          ? (data.products as any).data
-          : [];
+  const data = await graphqlClient.request<ProductsResponse>(GET_PRODUCTS, variables);
+  const raw = Array.isArray(data.products)
+    ? data.products
+    : Array.isArray((data.products as any)?.data)
+      ? (data.products as any).data
+      : [];
 
-      const normalized = raw
-        .map(normalizeProduct)
-        .filter((p: Product | null): p is Product => Boolean(p));
+  return raw
+    .map(normalizeProduct)
+    .filter((p: Product | null): p is Product => Boolean(p));
+};
 
-      productCache[cacheKey] = normalized;
-      return normalized;
-    })
-    .catch((e) => {
-      console.warn(`Strapi products fetch failed (${type}, ${categorySlug || 'all'})`, e);
-      return [];
-    })
-    .finally(() => {
-      delete productPromises[cacheKey];
-    });
+export const fetchProductBySlugServer = async (slug: string): Promise<Product | null> => {
+  try {
+    const variables = { filters: { slug: { eq: slug } } };
+    const data = await graphqlClient.request<ProductsResponse>(GET_PRODUCTS, variables);
+    const raw = Array.isArray(data.products)
+      ? data.products
+      : Array.isArray((data.products as any)?.data)
+        ? (data.products as any).data
+        : [];
 
-  productPromises[cacheKey] = promise;
-  return promise;
+    const normalized = raw
+      .map(normalizeProduct)
+      .filter((p: Product | null): p is Product => Boolean(p));
+
+    return normalized[0] ?? null;
+  } catch (error) {
+    console.warn(`Strapi product fetch failed (slug: ${slug})`, error);
+    return null;
+  }
 };

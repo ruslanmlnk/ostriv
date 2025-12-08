@@ -26,14 +26,17 @@ const fetchCategories = async (): Promise<Category[]> => {
   return categoriesPromise;
 };
 
-export const useCategories = () => {
-  const [categories, setCategories] = useState<Category[]>(cachedCategories || []);
-  const [loading, setLoading] = useState(!cachedCategories || cachedCategories.length === 0);
+export const useCategories = (initial?: Category[]) => {
+  const [categories, setCategories] = useState<Category[]>(initial || cachedCategories || []);
+  const [loading, setLoading] = useState(() => {
+    if (initial && initial.length > 0) return false;
+    return !cachedCategories || cachedCategories.length === 0;
+  });
 
   useEffect(() => {
     let isActive = true;
 
-    if (!cachedCategories || cachedCategories.length === 0) {
+    if ((!cachedCategories || cachedCategories.length === 0) && (!initial || initial.length === 0)) {
       setLoading(true);
       fetchCategories()
         .then((data) => {
@@ -48,7 +51,7 @@ export const useCategories = () => {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [initial]);
 
   return { categories, loading };
 };

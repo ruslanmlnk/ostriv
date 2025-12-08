@@ -1,26 +1,30 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 import SectionHeader from './SectionHeader';
-import { useNavigation } from './NavigationContext';
 import { getImageUrl } from '../api';
 import { useCategories } from './useCategories';
 import UiImage from './UiImage';
+import { Category } from '@/types';
 
-const CategoryGrid: React.FC = () => {
-  const { navigateTo } = useNavigation();
-  const { categories } = useCategories();
+interface CategoryGridProps {
+  initialCategories?: Category[];
+}
+
+const CategoryGrid: React.FC<CategoryGridProps> = ({ initialCategories }) => {
+  const { categories } = useCategories(initialCategories);
 
   return (
     <section className="w-full max-w-[1352px] mx-auto px-4 py-16">
-      <SectionHeader subtitle="Найкращі колекції" title="Популярні категорії товарів" />
+      <SectionHeader subtitle="Вибір для дому" title="Популярні категорії" />
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {categories.map((cat) => (
-          <div 
+          <Link 
             key={cat.id} 
+            href={`/catalog?category=${cat.slug}`}
             className="group bg-white border border-gray-100 rounded-sm p-6 flex items-center shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer h-[180px]"
-            onClick={() => navigateTo('catalog')}
           >
             {/* Image Side - Left */}
             <div className="w-[40%] flex justify-center items-center h-full">
@@ -42,13 +46,13 @@ const CategoryGrid: React.FC = () => {
                   {cat.title}
               </h3>
               
-              <button 
+              <span 
                 className="bg-[#282828] text-white text-[10px] uppercase font-bold py-3 px-4 rounded-[2px] group-hover:bg-amber-400 transition-colors w-full text-center"
               >
-                Дивитися детальніше
-              </button>
+                Дивитись каталог
+              </span>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>
@@ -56,4 +60,3 @@ const CategoryGrid: React.FC = () => {
 };
 
 export default CategoryGrid;
-

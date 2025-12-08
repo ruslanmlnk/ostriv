@@ -36,16 +36,33 @@ export const api = {
     }
   },
 
-  getProducts: async (type: 'all' | 'hit' | 'new' = 'all'): Promise<Product[]> => {
+  getProducts: async (type: 'all' | 'hit' | 'new' = 'all', categorySlug?: string): Promise<Product[]> => {
     try {
-      const products = await fetchProducts(type);
-      console.log('Fetched products:', products);
+      let products = await fetchProducts(type, categorySlug);
+
+      if (products.length === 0 && type !== 'all') {
+        const allProducts = await fetchProducts('all', categorySlug);
+        products = type === 'hit'
+          ? allProducts.filter((p) => p.isHit)
+          : allProducts.filter((p) => p.isNew);
+      }
+
+      if (categorySlug) {
+        products = products.filter((p) => p.category === categorySlug);
+      }
+
+      if (products.length === 0) {
+        throw new Error('No products from Strapi');
+      }
+
       return products;  
     } catch (error) {
       console.warn(`Strapi Connection Failed (Products: ${type}). Using Mock Data.`, error);
-      if (type === 'new') return NEW_PRODUCTS;
-      if (type === 'hit') return HIT_PRODUCTS;
-      return CATALOG_PRODUCTS;
+      let fallback = type === 'new' ? NEW_PRODUCTS : type === 'hit' ? HIT_PRODUCTS : CATALOG_PRODUCTS;
+      if (categorySlug) {
+        fallback = fallback.filter((p) => p.category === categorySlug);
+      }
+      return fallback;
     }
   },
 

@@ -8,6 +8,7 @@ export interface Media {
 
 export interface Product {
   id: number | string; // Payload IDs are usually strings
+  slug?: string;
   name: string;
   category: string; // Or Category object if populated
   price: number;

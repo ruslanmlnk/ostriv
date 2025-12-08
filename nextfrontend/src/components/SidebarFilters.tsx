@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { useCategories } from './useCategories';
+import { useNavigation } from './NavigationContext';
 
 interface FilterOption {
   label: string;
+  slug?: string;
   count: number;
   checked?: boolean;
 }
@@ -14,9 +16,10 @@ interface FilterGroupProps {
   title: string;
   options: FilterOption[];
   hasSearch?: boolean;
+  onChange?: (option: FilterOption) => void;
 }
 
-const FilterGroup: React.FC<FilterGroupProps> = ({ title, options, hasSearch }) => {
+const FilterGroup: React.FC<FilterGroupProps> = ({ title, options, hasSearch, onChange }) => {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
@@ -50,7 +53,9 @@ const FilterGroup: React.FC<FilterGroupProps> = ({ title, options, hasSearch }) 
                   <div className="relative flex items-center">
                     <input 
                         type="checkbox" 
-                        defaultChecked={opt.checked}
+                        checked={onChange ? Boolean(opt.checked) : undefined}
+                        defaultChecked={!onChange && Boolean(opt.checked)}
+                        onChange={onChange ? () => onChange(opt) : undefined}
                         className="peer h-5 w-5 cursor-pointer appearance-none rounded-sm border border-gray-200 transition-all checked:border-amber-400 checked:bg-amber-400 hover:border-amber-400 bg-white" 
                     />
                     <svg className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none opacity-0 peer-checked:opacity-100 text-white" viewBox="0 0 14 14" fill="none">
@@ -71,12 +76,30 @@ const FilterGroup: React.FC<FilterGroupProps> = ({ title, options, hasSearch }) 
   );
 };
 
-const SidebarFilters: React.FC = () => {
+interface SidebarFiltersProps {
+  selectedSlug?: string;
+  categoryCounts?: Record<string, number>;
+  onSelectCategory?: (slug?: string) => void;
+}
+
+const SidebarFilters: React.FC<SidebarFiltersProps> = ({ selectedSlug, categoryCounts, onSelectCategory }) => {
   const { categories } = useCategories();
-  const categoryOptions = categories.map((cat) => ({
+  const { navigateTo } = useNavigation();
+
+  const categoryOptions: FilterOption[] = categories.map((cat) => ({
     label: cat.title,
-    count: 0,
+    slug: cat.slug,
+    count: categoryCounts?.[cat.slug] ?? 0,
+    checked: selectedSlug ? cat.slug === selectedSlug : false,
   }));
+
+  const handleCategoryChange = (opt: FilterOption) => {
+    if (onSelectCategory) {
+      onSelectCategory(opt.slug);
+    } else {
+      navigateTo('catalog', opt.slug);
+    }
+  };
 
   return (
     <div className="w-full border border-gray-100 rounded-sm bg-white">
@@ -89,7 +112,11 @@ const SidebarFilters: React.FC = () => {
       <FilterGroup 
         title="Категорії товарів"
         hasSearch={true}
-        options={categoryOptions} 
+        options={categoryOptions.map((opt) => ({
+          ...opt,
+          checked: selectedSlug ? opt.slug === selectedSlug : opt.checked,
+        }))} 
+        onChange={handleCategoryChange}
       />
 
       {/* Manufacturer */}

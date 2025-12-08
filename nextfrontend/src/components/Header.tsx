@@ -1,14 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Heart, ShoppingBasket, Menu, ChevronRight } from 'lucide-react';
-import { useNavigation } from './NavigationContext';
 import { useCart } from './CartContext';
 import { useCategories } from './useCategories';
 import { useWishlist } from './WishlistContext';
 
 const Header: React.FC = () => {
-  const { navigateTo } = useNavigation();
   const { totalCount, totalAmount } = useCart();
   const { count: wishlistCount } = useWishlist();
   const { categories } = useCategories();
@@ -38,7 +37,7 @@ const Header: React.FC = () => {
         <div className="w-full max-w-[1352px] mx-auto px-4 flex flex-col lg:flex-row items-center justify-between gap-6">
 
           {/* Logo */}
-          <button onClick={() => navigateTo('home')} className="flex items-center min-w-fit focus:outline-none">
+          <Link href="/" className="flex items-center min-w-fit focus:outline-none">
             <svg width="147" height="45" viewBox="0 0 147 45" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[45px] w-auto">
                 <path d="M20.8367 0.222923C20.398 0.408512 16.062 3.79975 7.67667 10.5316C6.47877 11.4933 4.42041 13.1299 3.12128 14.159C0.168718 16.5042 0 16.7067 0 17.5334C0 18.0396 0.101231 18.2589 0.523026 18.6132C1.01231 19.035 1.11354 19.0519 3.22252 19.0519H5.39898L5.43272 27.3528L5.48334 35.6706L7.50795 35.7212C9.49883 35.7718 11.0173 35.62 12.4345 35.215L13.16 35.0126L13.1938 28.4495L13.2444 21.8863L22.3214 21.8357L31.3816 21.7851V25.9862V30.1872H31.9552C33.5243 30.1872 37.3036 30.8284 38.5521 31.3008C38.7714 31.3851 38.8052 30.7103 38.8052 25.2269V19.0519H41.0828C43.3437 19.0519 43.3774 19.0519 43.7992 18.5963C44.3391 18.0227 44.4572 17.4828 44.2041 16.8754C44.0692 16.5548 42.4832 15.1882 39.4463 12.7924C36.9324 10.8015 33.2375 7.88272 31.2297 6.31365C24.9534 1.35334 23.5699 0.290409 23.165 0.138565C22.5913 -0.0807686 21.4272 -0.0301552 20.8367 0.222923ZM30.3861 10.7003C31.3309 11.5945 31.3816 11.8813 31.3816 16.5211V20.739H22.2708H13.1431L13.1938 16.2849C13.2444 11.3077 13.2444 11.3583 14.5098 10.481L15.0834 10.0929L22.4564 10.1435L29.8462 10.1942L30.3861 10.7003Z" fill="black"/>
                 <path d="M16.0623 16.3027L16.1129 18.631H16.6191H17.1253V16.3533V14.0756L16.5685 14.025L16.0117 13.9744L16.0623 16.3027Z" fill="black"/>
@@ -74,7 +73,7 @@ const Header: React.FC = () => {
                 <path d="M139.023 39.2142C139.023 41.0363 139.04 41.1544 139.361 41.1544C139.648 41.1544 139.698 41.0363 139.698 40.3108C139.698 39.7034 139.766 39.4672 139.935 39.4672C140.069 39.4672 140.458 39.8384 140.812 40.3108C141.267 40.9013 141.571 41.1544 141.858 41.1544C142.229 41.1544 142.212 41.1038 141.47 40.1421C140.626 39.0454 140.626 39.0286 141.52 38.05C142.162 37.3414 142.178 37.2739 141.689 37.2739C141.436 37.2908 141.082 37.5776 140.66 38.1175C140.306 38.5899 139.935 38.9611 139.85 38.9611C139.766 38.9611 139.698 38.573 139.698 38.1175C139.698 37.392 139.648 37.2739 139.361 37.2739C139.04 37.2739 139.023 37.392 139.023 39.2142Z" fill="black"/>
                 <path d="M143.596 38.9951C143.208 39.9568 142.837 40.8342 142.786 40.9354C142.618 41.3572 143.36 41.1547 143.546 40.7329C143.714 40.3618 143.849 40.3111 144.676 40.3111C145.503 40.3111 145.638 40.3618 145.807 40.7329C145.908 40.9691 146.144 41.1547 146.313 41.1547C146.701 41.1547 146.701 41.1547 145.79 38.9277C145.25 37.5779 145.098 37.3586 144.744 37.308C144.339 37.2573 144.254 37.3923 143.596 38.9951ZM145.334 39.4169C145.452 39.7881 145.402 39.805 144.676 39.805C144.237 39.805 143.917 39.7375 143.951 39.67C143.984 39.6025 144.153 39.1807 144.339 38.7589L144.676 37.966L144.946 38.5059C145.098 38.8096 145.283 39.2145 145.334 39.4169Z" fill="black"/>
             </svg>
-          </button>
+          </Link>
 
           {/* Search Bar */}
           <div className="flex-1 w-full max-w-3xl mx-4 lg:mx-12">
@@ -92,20 +91,20 @@ const Header: React.FC = () => {
 
           {/* Icons / Cart */}
           <div className="flex items-center gap-4 min-w-fit">
-            <button 
-              onClick={() => navigateTo('wishlist')}
+            <Link
+              href="/wishlist"
               className="w-12 h-12 flex items-center justify-center text-gray-600 border border-gray-300 rounded-sm hover:border-amber-400 hover:text-amber-500 transition-colors bg-white group relative"
-            >
+              >
               <Heart size={20} className="group-hover:fill-amber-500 transition-colors" />
               {wishlistCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-amber-400 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                   {wishlistCount}
                 </span>
               )}
-            </button>
+            </Link>
 
-            <div 
-              onClick={() => navigateTo('cart')}
+            <Link
+              href="/cart"
               className="flex items-center gap-3 border border-gray-300 rounded-sm p-1.5 pr-5 bg-white hover:border-amber-400 transition-colors cursor-pointer group h-12"
             >
               <div className="relative w-9 h-9 flex items-center justify-center text-gray-600 group-hover:text-amber-500">
@@ -118,7 +117,7 @@ const Header: React.FC = () => {
                 <span className="text-[10px] text-gray-500 font-bold uppercase leading-tight">Мій кошик:</span>
                 <span className="text-sm font-bold text-amber-500 leading-tight">${totalAmount.toLocaleString().replace(/,/g, ' ')}</span>
               </div>
-            </div>
+            </Link>
           </div>
 
         </div>
@@ -145,16 +144,14 @@ const Header: React.FC = () => {
                 <ul className="py-2">
                   {categories.map((cat) => (
                     <li key={cat.id}>
-                      <button 
-                        onClick={() => {
-                          setIsCategoriesOpen(false);
-                          navigateTo('catalog');
-                        }}
+                      <Link
+                        href={`/catalog?category=${cat.slug}`}
+                        onClick={() => setIsCategoriesOpen(false)}
                         className="w-full text-left px-6 py-3 text-sm text-gray-700 hover:text-amber-500 hover:bg-gray-50 transition-colors flex items-center justify-between group"
                       >
                         {cat.title}
                         <ChevronRight size={14} className="text-gray-300 group-hover:text-amber-500" />
-                      </button>
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -166,19 +163,19 @@ const Header: React.FC = () => {
           <nav className="flex-1 w-full md:w-auto">
             <ul className="flex flex-col md:flex-row justify-center md:justify-start items-center">
               <li>
-                <button onClick={() => navigateTo('catalog')} className="block py-4 px-8 text-[12px] font-bold hover:text-amber-400 transition-colors uppercase tracking-wider">
+                <Link href="/catalog" className="block py-4 px-8 text-[12px] font-bold hover:text-amber-400 transition-colors uppercase tracking-wider">
                     Каталог
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => navigateTo('about')} className="block py-4 px-8 text-[12px] font-bold hover:text-amber-400 transition-colors uppercase tracking-wider">
+                <Link href="/about" className="block py-4 px-8 text-[12px] font-bold hover:text-amber-400 transition-colors uppercase tracking-wider">
                     Про компанію
-                </button>
+                </Link>
               </li>
               <li>
-                <button onClick={() => navigateTo('delivery')} className="block py-4 px-8 text-[12px] font-bold hover:text-amber-400 transition-colors uppercase tracking-wider">
+                <Link href="/delivery" className="block py-4 px-8 text-[12px] font-bold hover:text-amber-400 transition-colors uppercase tracking-wider">
                     Умови оплати та доставки
-                </button>
+                </Link>
               </li>
               <li>
                 <button className="block py-4 px-8 text-[12px] font-bold hover:text-amber-400 transition-colors uppercase tracking-wider">

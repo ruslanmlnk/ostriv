@@ -6,8 +6,8 @@ import { CartItem } from '../types';
 interface CartContextType {
   items: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, delta: number) => void;
+  removeFromCart: (id: number | string) => void;
+  updateQuantity: (id: number | string, delta: number) => void;
   totalAmount: number;
   totalCount: number;
 }
@@ -48,11 +48,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  const removeFromCart = (id: number) => {
+  const removeFromCart = (id: number | string) => {
     setItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const updateQuantity = (id: number, delta: number) => {
+  const updateQuantity = (id: number | string, delta: number) => {
     setItems(prev => prev.map(item => {
       if (item.id === id) {
         const newQuantity = Math.max(1, item.quantity + delta);

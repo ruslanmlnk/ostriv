@@ -7,34 +7,36 @@ import ProductSection from './ProductSection';
 import PromoSection from './PromoSection';
 import Features from './Features';
 import { api } from '../api';
-import { Product } from '../types';
+import { Product, Category } from '../types';
 
-const HomePage: React.FC = () => {
-  const [hitProducts, setHitProducts] = useState<Product[]>([]);
-  const [newProducts, setNewProducts] = useState<Product[]>([]);
+interface HomePageProps {
+  initialHits?: Product[];
+  initialNew?: Product[];
+  initialCategories?: Category[];
+}
+
+const HomePage: React.FC<HomePageProps> = ({ initialHits, initialNew, initialCategories }) => {
+  const [hitProducts, setHitProducts] = useState<Product[]>(initialHits || []);
+  const [newProducts, setNewProducts] = useState<Product[]>(initialNew || []);
   
   useEffect(() => {
+    if (initialHits && initialHits.length > 0 && initialNew && initialNew.length > 0) return;
+
     const loadData = async () => {
       const hits = await api.getProducts('hit');
-      
-      // const uniqueHits = hits.reduce<Product[]>((acc, p) => {
-      //   if (!acc.find((item) => item.id === p.id)) acc.push(p);
-      //   return acc;
-      // }, []);
       setHitProducts(hits.slice(0, 9));
 
-      // Fetch New Arrivals from Strapi
       const newArrivals = await api.getProducts('new');
       setNewProducts(newArrivals);
     };
 
     loadData();
-  }, []);
+  }, [initialHits, initialNew]);
 
   return (
     <>
       <Hero />
-      <CategoryGrid /> 
+      <CategoryGrid initialCategories={initialCategories} /> 
       {hitProducts.length > 0 && (
       <ProductSection 
         title="Хіти продажів" 
@@ -60,4 +62,3 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
-

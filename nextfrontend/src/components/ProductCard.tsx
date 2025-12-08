@@ -1,9 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 import { Star, Heart } from 'lucide-react';
 import { Product } from '../types';
-import { useNavigation } from './NavigationContext';
 import { getImageUrl } from '../api';
 import { useWishlist } from './WishlistContext';
 import UiImage from './UiImage';
@@ -14,25 +14,27 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' }) => {
-  const { navigateTo } = useNavigation();
   const { isInWishlist, toggleWishlist, removeFromWishlist } = useWishlist();
   
   const isLiked = isInWishlist(product.id);
+  const productHref = product.slug ? `/product/${product.slug}` : '/product';
 
   const handleHeartClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    toggleWishlist(product.id);
+    toggleWishlist(product.id, product);
   };
 
   const handleRemoveFromWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     removeFromWishlist(product.id);
   };
 
   return (
-    <div 
-        onClick={() => navigateTo('product')}
-        className="bg-white border border-gray-100 rounded-sm relative group/card hover:shadow-lg transition-all duration-300 flex flex-col items-center w-[303px] cursor-pointer"
+    <Link 
+      href={productHref}
+      className="bg-white border border-gray-100 rounded-sm relative group/card hover:shadow-lg transition-all duration-300 flex flex-col items-center w-[303px] cursor-pointer"
     >
       
       {variant === 'default' && product.discount && product.discount > 0 && (
@@ -100,7 +102,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
             )}
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

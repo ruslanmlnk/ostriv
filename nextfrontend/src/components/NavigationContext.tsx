@@ -34,8 +34,14 @@ export const useNavigation = () => {
   const router = useRouter();
   const pathname = usePathname() || '/';
 
-  const navigateTo = (page: Page) => {
-    const target = pageToPath[page] || '/';
+  const navigateTo = (page: Page, slug?: string) => {
+    const base = pageToPath[page] || '/';
+    const target =
+      page === 'catalog' && slug
+        ? `${base}?category=${encodeURIComponent(slug)}`
+        : slug
+          ? `${base}/${slug}`
+          : base;
     router.push(target);
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
