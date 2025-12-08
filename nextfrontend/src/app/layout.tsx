@@ -5,6 +5,10 @@ import Header from "@/components/Header";
 import Providers from "@/components/Providers";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
+
 const rubik = Rubik({
   variable: "--font-rubik",
   weight: ["300", "400", "500", "600", "700"],
