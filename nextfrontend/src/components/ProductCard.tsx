@@ -17,7 +17,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
   const { isInWishlist, toggleWishlist, removeFromWishlist } = useWishlist();
   
   const isLiked = isInWishlist(product.id);
-  const productHref = product.slug ? `/product/${product.slug}` : '/product';
+  const productHref = product.slug ? `/product/${product.slug}` : `/product/${product.id}`;
 
   const handleHeartClick = (e: React.MouseEvent) => {
     e.preventDefault();

@@ -101,7 +101,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
                   <button
                     onClick={() => toggleWishlist(product.id, product)}
                     className="w-10 h-10 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-amber-500 hover:border-amber-400 rounded-sm transition-colors flex-shrink-0 ml-4"
-                    aria-label="Додати до обраного"
+                    aria-label="Додати або прибрати з обраного"
                   >
                     <Heart size={20} className={isLiked ? 'fill-amber-500 text-amber-500' : ''} />
                   </button>
@@ -159,7 +159,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
                       className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-xs px-8 py-3 rounded-sm transition-colors flex items-center gap-2"
                     >
                       <ShoppingBasket size={18} />
-                      <span>Купити</span>
+                      <span>Додати в кошик</span>
                     </button>
                   </div>
                 </div>

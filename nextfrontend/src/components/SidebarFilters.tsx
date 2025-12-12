@@ -52,11 +52,10 @@ const FilterGroup: React.FC<FilterGroupProps> = ({ title, options, hasSearch, on
                 <label className="flex items-center gap-3 cursor-pointer select-none flex-1">
                   <div className="relative flex items-center">
                     <input 
-                        type="checkbox" 
-                        checked={onChange ? Boolean(opt.checked) : undefined}
-                        defaultChecked={!onChange && Boolean(opt.checked)}
-                        onChange={onChange ? () => onChange(opt) : undefined}
-                        className="peer h-5 w-5 cursor-pointer appearance-none rounded-sm border border-gray-200 transition-all checked:border-amber-400 checked:bg-amber-400 hover:border-amber-400 bg-white" 
+                      type="checkbox"
+                      {...(onChange ? { checked: Boolean(opt.checked) } : { defaultChecked: Boolean(opt.checked) })}
+                      onChange={onChange ? () => onChange(opt) : undefined}
+                      className="peer h-5 w-5 cursor-pointer appearance-none rounded-sm border border-gray-200 transition-all checked:border-amber-400 checked:bg-amber-400 hover:border-amber-400 bg-white" 
                     />
                     <svg className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none opacity-0 peer-checked:opacity-100 text-white" viewBox="0 0 14 14" fill="none">
                         <path d="M3 8L6 11L11 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -94,10 +93,11 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({ selectedSlug, categoryC
   }));
 
   const handleCategoryChange = (opt: FilterOption) => {
+    const nextSlug = selectedSlug === opt.slug ? undefined : opt.slug;
     if (onSelectCategory) {
-      onSelectCategory(opt.slug);
+      onSelectCategory(nextSlug);
     } else {
-      navigateTo('catalog', opt.slug);
+      navigateTo('catalog', nextSlug);
     }
   };
 

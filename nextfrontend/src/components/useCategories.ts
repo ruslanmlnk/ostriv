@@ -7,6 +7,12 @@ import { Category } from '../types';
 let cachedCategories: Category[] | null = null;
 let categoriesPromise: Promise<Category[]> | null = null;
 
+const seedCache = (initial?: Category[]) => {
+  if (initial && initial.length > 0 && (!cachedCategories || cachedCategories.length === 0)) {
+    cachedCategories = initial;
+  }
+};
+
 const fetchCategories = async (): Promise<Category[]> => {
   if (cachedCategories && cachedCategories.length > 0) return cachedCategories;
 
@@ -27,6 +33,7 @@ const fetchCategories = async (): Promise<Category[]> => {
 };
 
 export const useCategories = (initial?: Category[]) => {
+  seedCache(initial);
   const [categories, setCategories] = useState<Category[]>(initial || cachedCategories || []);
   const [loading, setLoading] = useState(() => {
     if (initial && initial.length > 0) return false;
@@ -34,6 +41,7 @@ export const useCategories = (initial?: Category[]) => {
   });
 
   useEffect(() => {
+    seedCache(initial);
     let isActive = true;
 
     if ((!cachedCategories || cachedCategories.length === 0) && (!initial || initial.length === 0)) {

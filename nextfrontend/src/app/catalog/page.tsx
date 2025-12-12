@@ -14,7 +14,8 @@ export default async function Catalog({ searchParams }: CatalogProps) {
 
   const [categories, products] = await Promise.all([
     fetchCategoriesServer(),
-    fetchProductsServer('all', categorySlug),
+    // тягнемо всі товари, фільтруємо на клієнті, щоб зберегти коректні лічильники
+    fetchProductsServer('all'),
   ]);
 
   return (

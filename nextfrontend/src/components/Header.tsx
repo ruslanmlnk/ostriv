@@ -6,11 +6,16 @@ import { Search, Heart, ShoppingBasket, Menu, ChevronRight } from 'lucide-react'
 import { useCart } from './CartContext';
 import { useCategories } from './useCategories';
 import { useWishlist } from './WishlistContext';
+import { Category } from '@/types';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  initialCategories?: Category[];
+}
+
+const Header: React.FC<HeaderProps> = ({ initialCategories }) => {
   const { totalCount, totalAmount } = useCart();
   const { count: wishlistCount } = useWishlist();
-  const { categories } = useCategories();
+  const { categories } = useCategories(initialCategories);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
