@@ -5,7 +5,9 @@ import { graphqlClient } from '../client';
 import { GET_CATEGORIES } from '../queries/categories';
 import type { CategoriesResponse, StrapiCategoryAttributes, StrapiItem } from '../types';
 import { getImageUrl } from '@/api';
+import { CATEGORIES } from '@/constants';
 
+const USE_MOCK = true; // тимчасово вимикаємо Strapi, використовуємо тестові дані
 let cachedCategories: Category[] | null = null;
 let categoriesPromise: Promise<Category[]> | null = null;
 
@@ -24,6 +26,16 @@ const normalizeCategory = (
 };
 
 export const fetchCategories = async (): Promise<Category[]> => {
+  if (USE_MOCK) {
+    if (!cachedCategories) {
+      cachedCategories = CATEGORIES.map((c) => ({
+        ...c,
+        image: getImageUrl(c.image) || '',
+      }));
+    }
+    return cachedCategories;
+  }
+
   if (cachedCategories && cachedCategories.length > 0) return cachedCategories;
   if (categoriesPromise) return categoriesPromise;
 

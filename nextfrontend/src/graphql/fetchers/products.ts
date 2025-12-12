@@ -5,10 +5,12 @@ import { getImageUrl } from '@/api';
 import { graphqlClient } from '../client';
 import { GET_PRODUCTS } from '../queries/products';
 import { ProductsResponse, StrapiItem, StrapiProductAttributes } from '../types';
+import { CATALOG_PRODUCTS, HIT_PRODUCTS, NEW_PRODUCTS } from '@/constants';
 
 type ProductKey = 'all' | 'hit' | 'new';
 const productCache: Record<string, Product[]> = {};
 const productPromises: Record<string, Promise<Product[]> | undefined> = {};
+const USE_MOCK = true; // тимчасово вимикаємо Strapi, використовуємо тестові дані
 
 const normalizeProduct = (
   item: StrapiItem<StrapiProductAttributes> | StrapiProductAttributes
@@ -45,11 +47,37 @@ const normalizeProduct = (
   };
 };
 
+const mockProducts = (type: ProductKey = 'all', categorySlug?: string): Product[] => {
+  let base: Product[] =
+    type === 'new'
+      ? NEW_PRODUCTS
+      : type === 'hit'
+        ? HIT_PRODUCTS
+        : [...CATALOG_PRODUCTS, ...HIT_PRODUCTS, ...NEW_PRODUCTS];
+
+  if (categorySlug) {
+    base = base.filter((p) => p.category === categorySlug);
+  }
+
+  // ensure image urls go through helper for consistency
+  return base.map((p) => ({
+    ...p,
+    slug: p.slug ?? `product-${p.id}`,
+    image: getImageUrl(p.image) || '',
+  }));
+};
+
 export const fetchProducts = async (type: ProductKey = 'all', categorySlug?: string): Promise<Product[]> => {
   const cacheKey = `${type}:${categorySlug ?? 'all'}`;
   if (productCache[cacheKey]) return productCache[cacheKey];
   const existingPromise = productPromises[cacheKey];
   if (existingPromise) return existingPromise;
+
+  if (USE_MOCK) {
+    const data = mockProducts(type, categorySlug);
+    productCache[cacheKey] = data;
+    return data;
+  }
 
   const typeFilters =
     type === 'hit'

@@ -4,7 +4,13 @@ import { OrderData } from '@/types';
 import { graphqlClient } from '../client';
 import { CREATE_ORDER } from '../queries/createOrder';
 
+const USE_MOCK = true; // тимчасово вимикаємо Strapi, повертаємо тестову відповідь
+
 export const createOrderRequest = async (orderData: OrderData): Promise<{ success: boolean; id: string | number }> => {
+  if (USE_MOCK) {
+    return { success: true, id: 'mock-order-id' };
+  }
+
   const strapiPayload = {
     firstName: orderData.customer.firstName,
     lastName: orderData.customer.lastName,
