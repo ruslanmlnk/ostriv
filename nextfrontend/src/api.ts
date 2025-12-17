@@ -1,25 +1,27 @@
 import { Product, Category, OrderData, Media } from './types';
 import { HIT_PRODUCTS, NEW_PRODUCTS, CATALOG_PRODUCTS } from './constants';
-import { STRAPI_URL } from './graphql/client';
+import { PAYLOAD_URL } from './graphql/client';
 import { fetchCategories } from './graphql/fetchers/categories';
 import { fetchProducts } from './graphql/fetchers/products';
 import { createOrderRequest } from './graphql/fetchers/order';
-import { StrapiMedia } from './graphql/types';
+import { PayloadMedia } from './graphql/types';
 
-export const getImageUrl = (image: StrapiMedia | StrapiMedia[] | Media | string | null | undefined): string => {
+export const getImageUrl = (image: PayloadMedia | PayloadMedia[] | Media | string | null | undefined): string => {
   if (!image) return '';
 
   const pick = Array.isArray(image) ? image[0] : image;
 
   if (typeof pick === 'string') {
-    return pick.startsWith('http') ? pick : `${STRAPI_URL}${pick}`;
+    return pick.startsWith('http') ? pick : `${PAYLOAD_URL}${pick}`;
   }
-  if ('url' in pick && typeof pick.url === 'string') {
-    return pick.url.startsWith('http') ? pick.url : `${STRAPI_URL}${pick.url}`;
+  if ('url' in pick && typeof pick.url === 'string' && pick.url) {
+    return pick.url.startsWith('http') ? pick.url : `${PAYLOAD_URL}${pick.url}`;
   }
-  if ('data' in pick && pick.data?.attributes?.url) {
-    const url = pick.data.attributes.url;
-    return url.startsWith('http') ? url : `${STRAPI_URL}${url}`;
+  if ('sizes' in pick && pick.sizes) {
+    const firstSized = Object.values(pick.sizes).find((s) => s?.url);
+    if (firstSized?.url) {
+      return firstSized.url.startsWith('http') ? firstSized.url : `${PAYLOAD_URL}${firstSized.url}`;
+    }
   }
   return '';
 };
@@ -31,7 +33,7 @@ export const api = {
       const categories = await fetchCategories();
       return categories;
     } catch (error) {
-      console.warn('Strapi Connection Failed (Categories).', error);
+      console.warn('Payload Connection Failed (Categories).', error);
       return [];
     }
   },
@@ -52,12 +54,12 @@ export const api = {
       }
 
       if (products.length === 0) {
-        throw new Error('No products from Strapi');
+        throw new Error('No products from Payload');
       }
 
       return products;  
     } catch (error) {
-      console.warn(`Strapi Connection Failed (Products: ${type}). Using Mock Data.`, error);
+      console.warn(`Payload Connection Failed (Products: ${type}). Using Mock Data.`, error);
       let fallback = type === 'new' ? NEW_PRODUCTS : type === 'hit' ? HIT_PRODUCTS : CATALOG_PRODUCTS;
       if (categorySlug) {
         fallback = fallback.filter((p) => p.category === categorySlug);
@@ -72,7 +74,7 @@ export const api = {
       return response;
     } catch (error) {
       console.error('API Error (Create Order):', error);
-      alert('Помилка при з’єднанні з сервером Strapi. Замовлення збережено локально (демо).');
+      alert('Не вдалося створити замовлення у Payload. Спробуйте ще раз пізніше.');
       return { success: true, id: 'mock-order-id' };
     }
   }

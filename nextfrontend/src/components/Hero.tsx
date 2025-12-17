@@ -7,7 +7,7 @@ const Hero: React.FC = () => {
     <section className="w-full max-w-[1352px] mx-auto px-4 mt-8">
       <div 
         className="relative w-full h-[400px] md:h-[550px] bg-cover bg-center rounded-lg overflow-hidden shadow-sm"
-        style={{ backgroundImage: 'url("https://i.ibb.co/z1Fm0fy/810e857acb86033094e53bea0a60b8693f44870b.jpg")' }}
+        style={{ backgroundImage: 'url("/img/heromain.png")' }}
       >
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white px-4">
@@ -15,7 +15,7 @@ const Hero: React.FC = () => {
             Стильні меблі та товари для дому
           </span>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold uppercase leading-tight max-w-5xl drop-shadow-xl">
-            Створіть затишок і комфорт <br className="hidden md:block" /> у кожній кімнаті вашого простору
+            побутова техніка для дому
           </h1>
         </div>
       </div>

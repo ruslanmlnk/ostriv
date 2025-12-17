@@ -77,7 +77,7 @@ const CartPage: React.FC = () => {
               <div className="col-span-1 md:col-span-2 flex items-center justify-between md:justify-start gap-8">
                  <div>
                     <span className="md:hidden font-bold mr-2 text-xs uppercase text-gray-500">Ціна:</span>
-                    <span className="font-bold text-gray-900 text-sm whitespace-nowrap">$ {item.price}</span>
+                    <span className="font-bold text-gray-900 text-sm whitespace-nowrap">₴ {item.price.toLocaleString('uk-UA')}</span>
                  </div>
                  <button 
                     onClick={() => removeFromCart(item.id)}
@@ -97,7 +97,7 @@ const CartPage: React.FC = () => {
         {/* Total Bar */}
         <div className="bg-amber-400 text-white font-bold uppercase p-4 pr-12 flex justify-end items-center gap-12 rounded-sm mt-[-1px] relative z-10">
             <span className="text-sm">Усього</span>
-            <span className="text-xl">$ {totalAmount.toLocaleString().replace(/,/g, ' ')}</span>
+            <span className="text-xl text-gray-900">₴{totalAmount.toLocaleString('uk-UA')}</span>
         </div>
 
         {/* Actions */}

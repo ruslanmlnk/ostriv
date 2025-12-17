@@ -1,51 +1,57 @@
-'use client';
+'use client'
 
-import { Product } from '@/types';
-import { getImageUrl } from '@/api';
-import { graphqlClient } from '../client';
-import { GET_PRODUCTS } from '../queries/products';
-import { ProductsResponse, StrapiItem, StrapiProductAttributes } from '../types';
-import { CATALOG_PRODUCTS, HIT_PRODUCTS, NEW_PRODUCTS } from '@/constants';
+import { Product } from '@/types'
+import { getImageUrl } from '@/api'
+import { graphqlClient } from '../client'
+import { PayloadCategory, PayloadProduct } from '../types'
+import { CATALOG_PRODUCTS, HIT_PRODUCTS, NEW_PRODUCTS } from '@/constants'
+import { GET_PRODUCTS } from '../queries/products'
 
-type ProductKey = 'all' | 'hit' | 'new';
-const productCache: Record<string, Product[]> = {};
-const productPromises: Record<string, Promise<Product[]> | undefined> = {};
-const USE_MOCK = true; // тимчасово вимикаємо Strapi, використовуємо тестові дані
+type ProductKey = 'all' | 'hit' | 'new'
+const productCache: Record<string, Product[]> = {}
+const productPromises: Record<string, Promise<Product[]> | undefined> = {}
+const USE_MOCK = false
 
-const normalizeProduct = (
-  item: StrapiItem<StrapiProductAttributes> | StrapiProductAttributes
-): Product | null => {
-  const attrs = (item as StrapiItem<StrapiProductAttributes>)?.attributes ?? (item as StrapiProductAttributes);
-  if (!attrs) return null;
+type ProductsQuery = {
+  Products?: {
+    docs?: PayloadProduct[] | null
+  } | null
+}
 
-  const image = Array.isArray(attrs.image) ? attrs.image[0] : attrs.image;
+const normalizeProduct = (item: PayloadProduct): Product | null => {
+  if (!item) return null
+
+  const media = Array.isArray(item.image) ? item.image[0] : item.image
+  const categoryField = item.category
   const categorySlug =
-    attrs.category?.data?.attributes?.slug ??
-    attrs.category?.slug ??
-    '';
+    typeof categoryField === 'string'
+      ? categoryField
+      : typeof categoryField === 'object' && categoryField !== null && 'slug' in categoryField
+        ? (categoryField as PayloadCategory).slug ?? ''
+        : ''
 
   const discount =
-    typeof attrs.discount === 'number'
-      ? attrs.discount
-      : attrs.oldPrice && attrs.price
-        ? Math.round((1 - attrs.price / attrs.oldPrice) * 100)
-        : undefined;
+    typeof item.discount === 'number'
+      ? item.discount
+      : item.oldPrice && item.price
+        ? Math.round((1 - item.price / item.oldPrice) * 100)
+        : undefined
 
   return {
-    id: (item as StrapiItem<StrapiProductAttributes>)?.id ?? attrs.slug ?? attrs.name ?? '',
-    slug: attrs.slug ?? '',
-    name: attrs.name ?? '',
+    id: item.id ?? item.slug ?? item.name ?? '',
+    slug: item.slug ?? '',
+    name: item.name ?? '',
     category: categorySlug,
-    price: attrs.price ?? 0,
-    oldPrice: attrs.oldPrice ?? undefined,
-    rating: attrs.rating ?? 0,
-    description: attrs.description ?? '',
-    isHit: Boolean(attrs.isHit),
-    isNew: Boolean(attrs.isNew),
+    price: item.price ?? 0,
+    oldPrice: item.oldPrice ?? undefined,
+    rating: item.rating ?? 0,
+    description: item.description ?? '',
+    isHit: Boolean(item.isHit),
+    isNew: Boolean(item.isNew),
     discount,
-    image: getImageUrl(image) || '',
-  };
-};
+    image: getImageUrl(media) || '',
+  }
+}
 
 const mockProducts = (type: ProductKey = 'all', categorySlug?: string): Product[] => {
   let base: Product[] =
@@ -53,71 +59,59 @@ const mockProducts = (type: ProductKey = 'all', categorySlug?: string): Product[
       ? NEW_PRODUCTS
       : type === 'hit'
         ? HIT_PRODUCTS
-        : [...CATALOG_PRODUCTS, ...HIT_PRODUCTS, ...NEW_PRODUCTS];
+        : [...CATALOG_PRODUCTS, ...HIT_PRODUCTS, ...NEW_PRODUCTS]
 
   if (categorySlug) {
-    base = base.filter((p) => p.category === categorySlug);
+    base = base.filter((p) => p.category === categorySlug)
   }
 
-  // ensure image urls go through helper for consistency
   return base.map((p) => ({
     ...p,
     slug: p.slug ?? `product-${p.id}`,
     image: getImageUrl(p.image) || '',
-  }));
-};
+  }))
+}
 
 export const fetchProducts = async (type: ProductKey = 'all', categorySlug?: string): Promise<Product[]> => {
-  const cacheKey = `${type}:${categorySlug ?? 'all'}`;
-  if (productCache[cacheKey]) return productCache[cacheKey];
-  const existingPromise = productPromises[cacheKey];
-  if (existingPromise) return existingPromise;
+  const cacheKey = `${type}:${categorySlug ?? 'all'}`
+  if (productCache[cacheKey]) return productCache[cacheKey]
+  const existingPromise = productPromises[cacheKey]
+  if (existingPromise) return existingPromise
 
   if (USE_MOCK) {
-    const data = mockProducts(type, categorySlug);
-    productCache[cacheKey] = data;
-    return data;
+    const data = mockProducts(type, categorySlug)
+    productCache[cacheKey] = data
+    return data
   }
 
-  const typeFilters =
+  const where =
     type === 'hit'
-      ? { isHit: { eq: true } }
+      ? { isHit: { equals: true } }
       : type === 'new'
-        ? { isNew: { eq: true } }
-        : undefined;
+        ? { isNew: { equals: true } }
+        : undefined
 
-  const filters = {
-    ...(typeFilters || {}),
-    ...(categorySlug ? { category: { slug: { eq: categorySlug } } } : {}),
-  };
-
-  const variables = Object.keys(filters).length > 0
-    ? { filters, ...(type === 'new' ? { sort: ['createdAt:desc'] } : {}) }
-    : (type === 'new' ? { sort: ['createdAt:desc'] } : {});
-
-  const promise = graphqlClient.request<ProductsResponse>(GET_PRODUCTS, variables)
+  const promise = graphqlClient.request<ProductsQuery>(GET_PRODUCTS, {
+    where,
+    limit: 100,
+  })
     .then((data) => {
-      const raw = Array.isArray(data.products)
-        ? data.products
-        : Array.isArray((data.products as any)?.data)
-          ? (data.products as any).data
-          : [];
-
-      const normalized = raw
+      const normalized = (data.Products?.docs || [])
         .map(normalizeProduct)
-        .filter((p: Product | null): p is Product => Boolean(p));
+        .filter((p: Product | null): p is Product => Boolean(p))
+        .filter((p) => (categorySlug ? p.category === categorySlug : true))
 
-      productCache[cacheKey] = normalized;
-      return normalized;
+      productCache[cacheKey] = normalized
+      return normalized
     })
     .catch((e) => {
-      console.warn(`Strapi products fetch failed (${type}, ${categorySlug || 'all'})`, e);
-      return [];
+      console.warn(`Payload products fetch failed (${type}, ${categorySlug || 'all'})`, e)
+      return []
     })
     .finally(() => {
-      delete productPromises[cacheKey];
-    });
+      delete productPromises[cacheKey]
+    })
 
-  productPromises[cacheKey] = promise;
-  return promise;
-};
+  productPromises[cacheKey] = promise
+  return promise
+}

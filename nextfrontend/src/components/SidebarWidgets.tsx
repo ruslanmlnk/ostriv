@@ -59,9 +59,9 @@ const SidebarWidgets: React.FC = () => {
                   ))}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-amber-500 font-bold text-sm">${item.price.toFixed(2)}</span>
+                  <span className="text-gray-900 font-bold text-sm">₴{item.price.toLocaleString('uk-UA')}</span>
                   {item.oldPrice && (
-                    <span className="text-gray-300 text-xs line-through">${item.oldPrice.toFixed(2)}</span>
+                    <span className="text-gray-300 text-xs line-through">₴{item.oldPrice.toLocaleString('uk-UA')}</span>
                   )}
                 </div>
               </div>

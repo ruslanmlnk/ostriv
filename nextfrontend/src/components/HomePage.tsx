@@ -47,7 +47,7 @@ const HomePage: React.FC<HomePageProps> = ({ initialHits, initialNew, initialCat
       />
       )}
       <PromoSection />
-      {newProducts.length > 0 && (
+      {/* {newProducts.length > 0 && (
       <ProductSection 
         title="Нові надходження товарів" 
         subtitle="Свіже надходження" 
@@ -55,7 +55,7 @@ const HomePage: React.FC<HomePageProps> = ({ initialHits, initialNew, initialCat
         withArrows 
         viewMode="slider"
       />
-      )}
+      )} */}
       <Features />
     </>
   );

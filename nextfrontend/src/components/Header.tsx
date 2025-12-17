@@ -120,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({ initialCategories }) => {
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] text-gray-500 font-bold uppercase leading-tight">Мій кошик:</span>
-                <span className="text-sm font-bold text-amber-500 leading-tight">${totalAmount.toLocaleString().replace(/,/g, ' ')}</span>
+                <span className="text-sm font-bold text-gray-900 leading-tight">₴{totalAmount.toLocaleString('uk-UA')}</span>
               </div>
             </Link>
           </div>
@@ -197,4 +197,3 @@ const Header: React.FC<HeaderProps> = ({ initialCategories }) => {
 };
 
 export default Header;
-

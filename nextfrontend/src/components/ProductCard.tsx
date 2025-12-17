@@ -92,12 +92,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
         </div>
 
         <div className="flex items-center gap-3">
-            <span className="text-amber-500 font-bold text-lg">
-                ${product.price.toFixed(2)}
+            <span className="text-gray-900 font-bold text-lg">
+                ₴{product.price.toLocaleString('uk-UA')}
             </span>
             {product.oldPrice && (
                 <span className="text-gray-400 text-sm line-through">
-                    ${product.oldPrice.toFixed(2)}
+                    ₴{product.oldPrice.toLocaleString('uk-UA')}
                 </span>
             )}
         </div>
@@ -107,4 +107,3 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
 };
 
 export default ProductCard;
-

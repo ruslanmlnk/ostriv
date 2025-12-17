@@ -120,12 +120,12 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
 
                 {/* Price */}
                 <div className="flex items-center gap-3 mb-8">
-                  <div className="text-4xl font-bold text-amber-500">
-                    ${product.price.toFixed(2)}
+                  <div className="text-4xl font-bold text-gray-900">
+                    ₴{product.price.toLocaleString('uk-UA')}
                   </div>
                   {product.oldPrice && (
                     <div className="text-gray-400 text-lg line-through">
-                      ${product.oldPrice.toFixed(2)}
+                      ₴{product.oldPrice.toLocaleString('uk-UA')}
                     </div>
                   )}
                   {product.discount && product.discount > 0 && (
@@ -138,8 +138,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
                 {/* Quantity & Buy */}
                 <div className="mb-6">
                   <span className="text-xs font-bold uppercase text-gray-900 block mb-3">Кількість</span>
-                  <div className="flex gap-4">
-                    <div className="flex items-center border border-gray-200 bg-gray-50 rounded-sm">
+                  <div className="flex flex-col gap-4 items-start">
+                    <div className="flex items-center border border-gray-200 bg-gray-50 rounded-sm w-[260px] max-w-full">
                       <button onClick={handleDecrease} className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-amber-500">
                         <Minus size={16} />
                       </button>
@@ -156,7 +156,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
 
                     <button
                       onClick={handleAddToCart}
-                      className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-xs px-8 py-3 rounded-sm transition-colors flex items-center gap-2"
+                      className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-xs px-8 py-3 rounded-sm transition-colors flex items-center justify-center gap-2 w-[260px] max-w-full"
                     >
                       <ShoppingBasket size={18} />
                       <span>Додати в кошик</span>

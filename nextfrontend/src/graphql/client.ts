@@ -1,7 +1,17 @@
-import { GraphQLClient } from 'graphql-request';
+import { GraphQLClient } from 'graphql-request'
 
-// Base URL for Strapi; adjust via env if needed.
-export const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL ?? 'http://46.175.148.52:1337';
-export const GRAPHQL_URL = `${STRAPI_URL}/graphql`;
+// Base URL for Payload CMS; adjust via env if needed.
+export const PAYLOAD_URL =
+  process.env.NEXT_PUBLIC_PAYLOAD_URL ??
+  process.env.NEXT_PUBLIC_CMS_URL ??
+  'http://localhost:3000'
 
-export const graphqlClient = new GraphQLClient(GRAPHQL_URL);
+export const GRAPHQL_URL = `${PAYLOAD_URL}/api/graphql`
+
+export const graphqlClient = new GraphQLClient(GRAPHQL_URL, {
+  fetch: (url, init) =>
+    fetch(url, {
+      ...init,
+      cache: 'no-store',
+    }),
+})

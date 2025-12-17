@@ -69,6 +69,9 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    categories: Category;
+    products: Product;
+    orders: Order;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +81,9 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
+    orders: OrdersSelect<false> | OrdersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -161,6 +167,64 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories".
+ */
+export interface Category {
+  id: number;
+  title: string;
+  slug: string;
+  image?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: number;
+  name: string;
+  slug: string;
+  category: number | Category;
+  price: number;
+  oldPrice?: number | null;
+  rating?: number | null;
+  discount?: number | null;
+  description?: string | null;
+  isHit?: boolean | null;
+  isNew?: boolean | null;
+  image: number | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders".
+ */
+export interface Order {
+  id: number;
+  status?: ('new' | 'processing' | 'paid' | 'shipped' | 'completed' | 'cancelled') | null;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  city: string;
+  warehouse: string;
+  deliveryMethod?: string | null;
+  paymentMethod: string;
+  items: {
+    product?: (number | null) | Product;
+    productId: string;
+    quantity: number;
+    id?: string | null;
+  }[];
+  total: number;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -190,6 +254,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'categories';
+        value: number | Category;
+      } | null)
+    | ({
+        relationTo: 'products';
+        value: number | Product;
+      } | null)
+    | ({
+        relationTo: 'orders';
+        value: number | Order;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -272,6 +348,63 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "categories_select".
+ */
+export interface CategoriesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  category?: T;
+  price?: T;
+  oldPrice?: T;
+  rating?: T;
+  discount?: T;
+  description?: T;
+  isHit?: T;
+  isNew?: T;
+  image?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "orders_select".
+ */
+export interface OrdersSelect<T extends boolean = true> {
+  status?: T;
+  firstName?: T;
+  lastName?: T;
+  phone?: T;
+  email?: T;
+  city?: T;
+  warehouse?: T;
+  deliveryMethod?: T;
+  paymentMethod?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        productId?: T;
+        quantity?: T;
+        id?: T;
+      };
+  total?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
