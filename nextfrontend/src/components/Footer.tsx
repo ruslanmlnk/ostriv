@@ -1,116 +1,212 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
-import { Facebook, Twitter, Instagram, Linkedin, Send, MapPin, Mail, Phone, Chrome } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { api } from '@/api';
+import { Category } from '@/types';
 import { useNavigation } from './NavigationContext';
+import logo from '../../public/logo_footer.svg'
+
+import location from '../../public/img/location.svg'
+import phone from '../../public/img/phone.svg'
+import post from '../../public/img/post.svg'
+import viber from '../../public/img/viber.svg'
+
+
+import instagram from '../../public/img/instagram.svg'
+import facebook from '../../public/img/facebook.svg'
+
+import Image from 'next/image';
+
 
 const Footer: React.FC = () => {
   const { navigateTo } = useNavigation();
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.getCategories().then((cats) => {
+      if (!cancelled) setCategories(cats);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const [leftCats, rightCats] = useMemo(() => {
+    if (!categories.length) return [[], []] as [Category[], Category[]];
+    const half = Math.ceil(categories.length / 2);
+    return [categories.slice(0, half), categories.slice(half)] as [Category[], Category[]];
+  }, [categories]);
 
   return (
-    <footer className="bg-[#2a2a2a] text-white pt-16 pb-8 border-t border-gray-800">
+    <footer className="bg-[#282828] text-[#878787] pt-12 pb-8 border-t border-gray-800 font-sans">
       <div className="w-full max-w-[1352px] mx-auto px-4">
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          
-          {/* Column 1: Brand & Schedule */}
-          <div>
-            <div className="mb-8">
-               <button onClick={() => navigateTo('home')} className="inline-block focus:outline-none">
-                <svg width="147" height="45" viewBox="0 0 147 45" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-[45px] w-auto">
-                    <path d="M20.8367 0.222923C20.398 0.408512 16.062 3.79975 7.67667 10.5316C6.47877 11.4933 4.42041 13.1299 3.12128 14.159C0.168718 16.5042 0 16.7067 0 17.5334C0 18.0396 0.101231 18.2589 0.523026 18.6132C1.01231 19.035 1.11354 19.0519 3.22252 19.0519H5.39898L5.43272 27.3528L5.48334 35.6706L7.50795 35.7212C9.49883 35.7718 11.0173 35.62 12.4345 35.215L13.16 35.0126L13.1938 28.4495L13.2444 21.8863L22.3214 21.8357L31.3816 21.7851V25.9862V30.1872H31.9552C33.5243 30.1872 37.3036 30.8284 38.5521 31.3008C38.7714 31.3851 38.8052 30.7103 38.8052 25.2269V19.0519H41.0828C43.3437 19.0519 43.3774 19.0519 43.7992 18.5963C44.3391 18.0227 44.4572 17.4828 44.2041 16.8754C44.0692 16.5548 42.4832 15.1882 39.4463 12.7924C36.9324 10.8015 33.2375 7.88272 31.2297 6.31365C24.9534 1.35334 23.5699 0.290409 23.165 0.138565C22.5913 -0.0807686 21.4272 -0.0301552 20.8367 0.222923ZM30.3861 10.7003C31.3309 11.5945 31.3816 11.8813 31.3816 16.5211V20.739H22.2708H13.1431L13.1938 16.2849C13.2444 11.3077 13.2444 11.3583 14.5098 10.481L15.0834 10.0929L22.4564 10.1435L29.8462 10.1942L30.3861 10.7003Z" fill="white"/>
-                    <path d="M16.0623 16.3027L16.1129 18.631H16.6191H17.1253V16.3533V14.0756L16.5685 14.025L16.0117 13.9744L16.0623 16.3027Z" fill="white"/>
-                    <path d="M126.944 9.67038C125.139 10.4634 125.341 13.0447 127.247 13.4665C128.783 13.8208 130.065 13.0785 130.2 11.7794C130.369 10.0753 128.614 8.94489 126.944 9.67038Z" fill="white"/>
-                    <path d="M64.1124 9.87362C61.3454 10.1773 59.3377 11.0546 57.7348 12.6743C55.3897 15.0533 54.5967 16.9766 54.5967 20.3173C54.5967 22.325 54.8498 23.4892 55.6259 25.0414C57.7686 29.2425 62.7289 31.4695 67.588 30.3897C69.7813 29.9005 71.1817 29.1581 72.6326 27.7409C73.9655 26.4249 74.556 25.48 75.1972 23.6073C75.5852 22.5275 75.6358 22.0551 75.6358 20.3173C75.6358 18.6638 75.5683 18.0902 75.2646 17.196C73.7124 12.6743 70.4899 10.1942 65.7996 9.89049C65.1922 9.83988 64.4329 9.83988 64.1124 9.87362ZM67.3686 13.9903C72.3289 15.8462 72.6495 23.911 67.841 26.2561C66.9975 26.6779 66.7275 26.7286 65.1247 26.7286C63.4712 26.7286 63.2857 26.6948 62.324 26.1887C59.9788 24.9739 58.6628 22.3419 58.9665 19.4905C59.2364 17.0273 60.3837 15.222 62.324 14.2265C63.8762 13.4167 65.614 13.3323 67.3686 13.9903Z" fill="white"/>
-                    <path d="M82.9585 15.0708C79.1792 16.1674 76.969 20.166 77.7789 24.4515C78.1669 26.4761 79.601 28.4838 81.3894 29.4962C83.684 30.8122 87.0415 30.829 89.2179 29.5636C90.0784 29.0575 91.7825 27.4209 91.7825 27.1004C91.7825 26.9991 91.1582 26.493 90.4158 25.9868L89.0492 25.0926L88.5262 25.5988C87.7501 26.3243 86.974 26.6617 85.8773 26.7629C83.4309 26.9991 81.7943 25.3626 81.7775 22.6968C81.7775 21.3808 82.0306 20.6216 82.756 19.7611C84.1733 18.0739 87.109 18.0065 88.5599 19.643L89.0492 20.2167L90.4158 19.3393C91.1582 18.85 91.7656 18.3776 91.7656 18.2764C91.7993 17.804 89.8591 16.1337 88.6106 15.5432C87.4464 14.9864 87.2102 14.9358 85.5568 14.8852C84.3926 14.8683 83.4815 14.9189 82.9585 15.0708Z" fill="white"/>
-                    <path d="M86.5527 39.2142C86.5527 41.0363 86.5696 41.1544 86.8902 41.1544C87.2107 41.1544 87.2276 41.0363 87.2276 39.5516V37.9488H88.0712H88.9148V39.5516C88.9148 41.0363 88.9317 41.1544 89.2522 41.1544C89.5728 41.1544 89.5897 41.0363 89.5897 39.2142V37.2739H88.0712H86.5527V39.2142Z" fill="white"/>
-                    <path d="M95.6631 39.2142V41.1544H96.8104C98.0589 41.1544 98.2107 41.0869 98.5144 40.5133C98.6831 40.1927 98.6831 40.0071 98.5144 39.6022C98.2951 39.0454 97.7889 38.7924 96.9116 38.7924C96.4223 38.7924 96.338 38.7418 96.338 38.3706C96.338 37.9994 96.4054 37.9657 97.2997 37.915C98.0758 37.8813 98.2951 37.7969 98.3288 37.5607C98.3794 37.3077 98.2276 37.2739 97.0297 37.2739H95.6631V39.2142ZM97.8395 39.7034C98.2107 40.1421 97.8733 40.4796 97.0803 40.4796C96.3717 40.4796 96.338 40.4627 96.338 39.9734C96.338 39.501 96.3717 39.4672 96.996 39.4672C97.3503 39.4672 97.7383 39.5685 97.8395 39.7034Z" fill="white"/>
-                    <path d="M99.9486 38.7406C100.742 40.1916 100.758 40.3941 100.151 40.5122C99.7292 40.5797 99.6111 40.9508 99.9654 41.0858C100.59 41.3389 101.062 40.8496 101.838 39.1962C102.243 38.3188 102.581 37.509 102.581 37.4246C102.581 37.3403 102.446 37.2728 102.26 37.2728C102.024 37.2728 101.838 37.5427 101.568 38.2851C101.366 38.8419 101.13 39.2974 101.079 39.2974C101.011 39.2974 100.742 38.8419 100.472 38.2851C100.084 37.4584 99.9148 37.2728 99.5774 37.2728C99.1893 37.2728 99.1893 37.2897 99.9486 38.7406Z" fill="white"/>
-                    <path d="M103.256 37.6113C103.256 37.8813 103.374 37.9488 103.846 37.9488H104.437V39.5516C104.437 41.0363 104.454 41.1544 104.774 41.1544C105.078 41.1544 105.112 41.0194 105.146 39.501L105.196 37.8644H105.702C106.04 37.8475 106.225 37.7632 106.259 37.5607C106.31 37.3077 106.141 37.2739 104.791 37.2739C103.374 37.2739 103.256 37.2908 103.256 37.6113Z" fill="white"/>
-                    <path d="M107.44 37.6625C106.343 38.5904 106.377 40.1089 107.541 40.885C108.148 41.2731 109.414 41.2393 110.021 40.8006C111.067 40.0583 111.033 38.2699 109.937 37.595C109.194 37.1395 108.03 37.1732 107.44 37.6625ZM109.818 38.388C110.021 38.6411 110.173 39.0122 110.173 39.2147C110.173 39.4172 110.021 39.7883 109.818 40.0414C109.549 40.3957 109.329 40.4801 108.739 40.4801C108.148 40.4801 107.929 40.3957 107.659 40.0414C107.456 39.7883 107.305 39.4172 107.305 39.2147C107.305 39.0122 107.456 38.6411 107.659 38.388C107.929 38.0337 108.148 37.9493 108.739 37.9493C109.329 37.9493 109.549 38.0337 109.818 38.388Z" fill="white"/>
-                    <path d="M111.691 39.2142V41.1544H112.923C113.918 41.1544 114.222 41.0869 114.442 40.8507C114.796 40.4458 114.813 39.5685 114.458 39.2817C114.273 39.1298 114.222 38.9105 114.29 38.5562C114.357 38.2525 114.307 37.915 114.138 37.662C113.902 37.3245 113.75 37.2739 112.788 37.2739H111.691V39.2142ZM113.514 37.9319C113.649 37.9488 113.716 38.1006 113.682 38.32C113.649 38.6405 113.514 38.7249 112.889 38.7586C112.265 38.8092 112.164 38.7755 112.265 38.5393C112.316 38.3874 112.366 38.1512 112.366 38.0163C112.366 37.8475 112.501 37.7969 112.839 37.8475C113.092 37.8813 113.395 37.9319 113.514 37.9319ZM114.053 39.7878C114.188 40.0578 114.155 40.1759 113.851 40.3783C113.649 40.5302 113.227 40.6483 112.94 40.6483C112.468 40.6483 112.4 40.5808 112.333 40.1421C112.231 39.501 112.265 39.4672 113.142 39.4672C113.699 39.4672 113.918 39.5516 114.053 39.7878Z" fill="white"/>
-                    <path d="M116.062 39.2136C115.319 41.0526 115.302 41.1539 115.64 41.1539C115.842 41.1539 116.062 41.002 116.163 40.7658C116.315 40.4453 116.467 40.3946 117.26 40.3946C118.053 40.3946 118.204 40.4453 118.356 40.7658C118.508 41.1201 119.115 41.3226 119.115 41.0358C119.115 40.9683 118.795 40.0909 118.407 39.0955C117.749 37.4421 117.648 37.2734 117.26 37.2734C116.871 37.2734 116.77 37.4589 116.062 39.2136ZM117.631 38.7412C117.783 39.1799 117.884 39.5848 117.833 39.6692C117.732 39.8379 116.585 39.8547 116.585 39.6692C116.585 39.4329 117.158 37.9482 117.26 37.9482C117.31 37.9482 117.479 38.3025 117.631 38.7412Z" fill="white"/>
-                    <path d="M120.887 37.4587C120.718 37.7118 120.903 37.8299 121.511 37.8468L122.068 37.8637L122.118 39.5171C122.152 40.9849 122.203 41.1705 122.456 41.1199C122.692 41.0693 122.759 40.7994 122.827 39.4665L122.911 37.8637L123.468 37.8974C123.907 37.9143 124.008 37.8637 124.008 37.5937C124.008 37.3069 123.873 37.2731 122.506 37.2731C121.612 37.2731 120.937 37.3406 120.887 37.4587Z" fill="white"/>
-                    <path d="M124.851 37.3077C124.851 37.3414 124.834 38.2187 124.8 39.2648L124.767 41.1544H126.251C127.584 41.1544 127.736 41.1207 127.685 40.8507C127.635 40.6145 127.415 40.547 126.488 40.5133L125.357 40.4627L125.391 39.9734C125.425 39.4672 125.441 39.4672 126.403 39.4672C127.264 39.4672 127.382 39.4335 127.382 39.1298C127.382 38.8261 127.264 38.7924 126.386 38.7924C125.425 38.7924 125.408 38.7755 125.425 38.32C125.441 37.8644 125.458 37.8644 126.504 37.8982C127.432 37.915 127.55 37.8813 127.55 37.5945C127.55 37.3077 127.415 37.2739 126.201 37.2739C125.458 37.2739 124.851 37.2908 124.851 37.3077Z" fill="white"/>
-                    <path d="M128.985 38.1344C129.306 38.6068 129.576 39.0792 129.576 39.1973C129.576 39.2985 129.306 39.7878 128.985 40.2771C128.445 41.0701 128.411 41.1544 128.732 41.1544C128.934 41.1544 129.238 40.9013 129.508 40.4796C129.761 40.1084 130.014 39.8047 130.082 39.8047C130.149 39.8047 130.402 40.1084 130.655 40.4796C130.925 40.8845 131.229 41.1544 131.431 41.1544C131.87 41.1544 131.853 41.0532 131.381 40.4121C130.537 39.2985 130.52 39.231 131.178 38.2019C131.769 37.2908 131.769 37.2739 131.398 37.2739C131.128 37.2739 130.875 37.4764 130.588 37.9488C130.132 38.6743 129.93 38.6405 129.474 37.7463C129.306 37.4258 129.103 37.2739 128.816 37.2739H128.395L128.985 38.1344Z" fill="white"/>
-                    <path d="M132.781 39.2142C132.781 41.0363 132.798 41.1544 133.119 41.1544C133.406 41.1544 133.456 41.0363 133.456 40.3108V39.4672H134.468H135.481V40.3108C135.481 41.0532 135.531 41.1544 135.818 41.1544C136.156 41.1544 136.172 41.0701 136.122 39.2648C136.071 37.6113 136.038 37.3583 135.784 37.3077C135.531 37.257 135.481 37.3751 135.481 38.0163V38.7924H134.468H133.456V38.0331C133.456 37.392 133.406 37.2739 133.119 37.2739C132.798 37.2739 132.781 37.392 132.781 39.2142Z" fill="white"/>
-                    <path d="M137.337 39.2142C137.337 40.8339 137.388 41.1544 137.59 41.1544C137.792 41.1544 137.843 40.8339 137.843 39.2142C137.843 37.5945 137.792 37.2739 137.59 37.2739C137.388 37.2739 137.337 37.5945 137.337 39.2142Z" fill="white"/>
-                    <path d="M139.023 39.2142C139.023 41.0363 139.04 41.1544 139.361 41.1544C139.648 41.1544 139.698 41.0363 139.698 40.3108C139.698 39.7034 139.766 39.4672 139.935 39.4672C140.069 39.4672 140.458 39.8384 140.812 40.3108C141.267 40.9013 141.571 41.1544 141.858 41.1544C142.229 41.1544 142.212 41.1038 141.47 40.1421C140.626 39.0454 140.626 39.0286 141.52 38.05C142.162 37.3414 142.178 37.2739 141.689 37.2739C141.436 37.2908 141.082 37.5776 140.66 38.1175C140.306 38.5899 139.935 38.9611 139.85 38.9611C139.766 38.9611 139.698 38.573 139.698 38.1175C139.698 37.392 139.648 37.2739 139.361 37.2739C139.04 37.2739 139.023 37.392 139.023 39.2142Z" fill="white"/>
-                    <path d="M143.596 38.9951C143.208 39.9568 142.837 40.8342 142.786 40.9354C142.618 41.3572 143.36 41.1547 143.546 40.7329C143.714 40.3618 143.849 40.3111 144.676 40.3111C145.503 40.3111 145.638 40.3618 145.807 40.7329C145.908 40.9691 146.144 41.1547 146.313 41.1547C146.701 41.1547 146.701 41.1547 145.79 38.9277C145.25 37.5779 145.098 37.3586 144.744 37.308C144.339 37.2573 144.254 37.3923 143.596 38.9951ZM145.334 39.4169C145.452 39.7881 145.402 39.805 144.676 39.805C144.237 39.805 143.917 39.7375 143.951 39.67C143.984 39.6025 144.153 39.1807 144.339 38.7589L144.676 37.966L144.946 38.5059C145.098 38.8096 145.283 39.2145 145.334 39.4169Z" fill="white"/>
-                    <path d="M33.069 38.6233C31.5337 39.0113 29.4247 39.8718 25.4092 41.7952C23.7221 42.5882 21.5625 43.5161 20.6008 43.8704C18.6605 44.5453 18.6605 44.5622 20.837 44.8827C24.1101 45.3551 28.1256 44.4103 33.4908 41.8964C35.8698 40.7997 37.3376 40.4286 39.5647 40.4117C40.6782 40.3948 41.8424 40.4454 42.1629 40.5298C42.7366 40.6479 42.7366 40.6479 42.416 40.2936C41.9267 39.7537 39.8515 38.8257 38.4849 38.5389C36.8989 38.2015 34.655 38.2352 33.069 38.6233Z" fill="white"/>
-                </svg>
-               </button>
-            </div>
-            
-            <div>
-                <h5 className="text-sm font-bold uppercase text-white mb-4">Графік роботи</h5>
-                <p className="text-sm text-[#999999] mb-1">Будні: 09:00-19:00</p>
-                <p className="text-sm text-[#999999] mb-1">Сб: 09:00-18:00</p>
-                <p className="text-sm text-[#999999]">Вс: вихідний</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 my-[100px]">
+          <div className="lg:col-span-3 flex flex-col gap-8">
+            <button onClick={() => navigateTo('home')} className="inline-block focus:outline-none w-fit">
+              <Image src={logo} alt="Острів Лого" className="h-[40px] w-auto" />
+            </button>
+            <div className="flex flex-col gap-2">
+              <h5 className="text-white font-medium text-[16px] uppercase leading-none mb-2">ГРАФІК РОБОТИ</h5>
+              <p className="text-[16px] leading-[1.3] text-[#878787]">
+                Будні: 09:00-19:00 <br />
+                Сб: 09:00-18:00 <br />
+                Нд: вихідний
+              </p>
             </div>
           </div>
 
-          {/* Column 2: Main */}
-          <div>
-            <h5 className="text-sm font-bold uppercase text-white mb-6">Основне</h5>
-            <ul className="space-y-3 text-sm text-[#999999]">
-              <li><button onClick={() => navigateTo('home')} className="hover:text-amber-500 transition-colors">Головна сторінка</button></li>
-              <li><button onClick={() => navigateTo('catalog')} className="hover:text-amber-500 transition-colors">Каталог</button></li>
-              <li><button onClick={() => navigateTo('delivery')} className="hover:text-amber-500 transition-colors">Умови оплати та доставки</button></li>
-            </ul>
-          </div>
-
-          {/* Column 3: Catalog */}
-          <div>
-            <h5 className="text-sm font-bold uppercase text-white mb-6">Каталог</h5>
-            <ul className="space-y-3 text-sm text-[#999999]">
-              <li><button onClick={() => navigateTo('catalog')} className="hover:text-amber-500 transition-colors">М'які меблі</button></li>
-              <li><button onClick={() => navigateTo('catalog')} className="hover:text-amber-500 transition-colors">Освітлення</button></li>
-              <li><button onClick={() => navigateTo('catalog')} className="hover:text-amber-500 transition-colors">Товари для кухні</button></li>
-              <li><button onClick={() => navigateTo('catalog')} className="hover:text-amber-500 transition-colors">Системи зберігання</button></li>
-              <li><button onClick={() => navigateTo('catalog')} className="hover:text-amber-500 transition-colors">Побутова техніка</button></li>
-            </ul>
-          </div>
-
-          {/* Column 4: Contacts */}
-          <div>
-            <h5 className="text-sm font-bold uppercase text-white mb-6">Контактна інформація</h5>
-            <ul className="space-y-4 text-sm text-[#999999]">
-              <li className="flex items-center gap-3">
-                <div className="w-6 flex justify-center"><Phone size={16} className="text-white" /></div>
-                <span>+380111111111</span>
+          <div className="lg:col-span-2">
+            <h5 className="text-white font-medium text-[16px] uppercase leading-none mb-6">ОСНОВНЕ</h5>
+            <ul className="space-y-[11px] text-[16px]">
+              <li>
+                <button
+                  onClick={() => navigateTo('home')}
+                  className="hover:text-white transition-colors leading-none block text-left"
+                >
+                  Головна сторінка
+                </button>
               </li>
-              <li className="flex items-center gap-3">
-                <div className="w-6 flex justify-center"><Send size={16} className="text-white" /></div>
-                <span>ostryv</span>
+              <li>
+                <button
+                  onClick={() => navigateTo('delivery')}
+                  className="hover:text-white transition-colors leading-none block text-left"
+                >
+                  Умови оплати та доставки
+                </button>
               </li>
-              <li className="flex items-center gap-3">
-                <div className="w-6 flex justify-center"><Mail size={16} className="text-white" /></div>
-                <span>ostryv@gmail.com</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="w-6 flex justify-center"><MapPin size={16} className="text-white" /></div>
-                <span>м. Київ, вул.Вергая 19</span>
+              <li>
+                <button
+                  onClick={() => navigateTo('about')}
+                  className="hover:text-white transition-colors leading-none block text-left"
+                >
+                  Про компанію
+                </button>
               </li>
             </ul>
           </div>
 
+          <div className="lg:col-span-4">
+            <h5 className="text-white font-medium text-[16px] uppercase leading-none mb-6">КАТАЛОГ</h5>
+            <div className="grid grid-cols-2 gap-4 text-[16px]">
+              <ul className="space-y-[11px]">
+                {leftCats.length === 0 && <li className="text-[#666]">Категорії завантажуються…</li>}
+                {leftCats.map((cat) => (
+                  <li key={cat.slug || cat.id}>
+                    <button
+                      onClick={() => navigateTo('catalog', cat.slug)}
+                      className="hover:text-white transition-colors leading-none block text-left"
+                    >
+                      {cat.title}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <ul className="space-y-[11px]">
+                {rightCats.map((cat) => (
+                  <li key={cat.slug || cat.id}>
+                    <button
+                      onClick={() => navigateTo('catalog', cat.slug)}
+                      className="hover:text-white transition-colors leading-none block text-left"
+                    >
+                      {cat.title}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="lg:col-span-3">
+            <h5 className="text-white font-medium text-[16px] uppercase leading-none mb-6">КОНТАКТНА ІНФОРМАЦІЯ</h5>
+            <div className="space-y-4 text-[16px]">
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8  flex items-center justify-center flex-shrink-0">
+                  <Image src={phone} alt="Phone" className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col">
+                  <a
+                    href="tel:+380505956273"
+                    className="hover:text-white transition-colors leading-tight mb-1 block text-left"
+                  >
+                    +380505956273
+                  </a>
+                  <a
+                    href="tel:+380505956273"
+                    className="hover:text-white transition-colors leading-tight block text-left"
+                  >
+                    +380505956273
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8  flex items-center justify-center flex-shrink-0">
+                  <Image src={viber} alt="Viber" className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col pt-1.5">
+                  <a
+                    href="tel:+380505573395"
+                    className="hover:text-white transition-colors leading-tight block text-left"
+                  >
+                    +380505573395
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8  flex items-center justify-center flex-shrink-0">
+                  <Image src={post} alt="Email" className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col pt-1.5">
+                  <a
+                    href="mailto:ostrowtor@gmail.com"
+                    className="hover:text-white transition-colors leading-tight block text-left"
+                  >
+                    ostrowtor@gmail.com
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8  flex items-center justify-center flex-shrink-0">
+                  <Image src={location} alt="Location" className="w-6 h-6" />
+                </div>
+                <div className="flex flex-col pt-0.5">
+                  <span className="leading-tight block text-left">
+                    м.Київ с.Вішневе <br /> вул.Чорновола,1
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 border-t border-[#3a3a3a] flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-[#999999]">© 2025 Острів. Усі права захищені.</p>
-          
+        <div className="pt-8 border-t border-[#989898] flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-[16px] text-[#878787] leading-none">© 2025 Острів. Усі права захищені.</p>
           <div className="flex gap-2">
-            {[Facebook, Twitter, Chrome, Instagram, Linkedin].map((Icon, i) => (
-              <Link key={i} href="#" className="w-9 h-9 flex items-center justify-center border border-[#444] text-[#999] hover:border-amber-500 hover:text-amber-500 transition-colors">
-                <Icon size={16} />
-              </Link>
-            ))}
+            <a
+              href="#"
+              className="flex items-center justify-center hover:border-white transition-colors group"
+            >
+              <Image
+                src={facebook}
+                alt="Facebook"
+                className="w-9 h-9 opacity-50 group-hover:opacity-100 transition-opacity"
+              />
+            </a>
+            <a
+              href="#"
+              className="flex items-center justify-center hover:border-white transition-colors group"
+            >
+              <Image
+                src={instagram}
+                alt="Instagram"
+                className="w-9 h-9 opacity-50 group-hover:opacity-100 transition-opacity"
+              />
+            </a>
           </div>
         </div>
-
       </div>
     </footer>
   );

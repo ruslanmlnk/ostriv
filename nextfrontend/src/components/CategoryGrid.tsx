@@ -24,7 +24,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ initialCategories }) => {
           <Link 
             key={cat.id} 
             href={`/catalog?category=${cat.slug}`}
-            className="group bg-white border border-[#E5E5E5] rounded-sm p-6 flex items-center shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer h-[180px]"
+            className="group bg-white border border-[#E5E5E5] rounded-sm p-6 flex items-center hover:shadow-xl transition-all duration-300 cursor-pointer h-[180px]"
           >
             <div className="w-[40%] flex justify-center items-center h-full">
               <div className="w-full h-full flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
