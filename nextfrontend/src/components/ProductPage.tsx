@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import Link from 'next/link';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { House, ChevronRight, Heart, Star, Minus, Plus, ShoppingBasket } from 'lucide-react';
+import React, { useState } from 'react';
+import { House, ChevronRight, Heart, Star, Minus, Plus, ShoppingBasket, Check } from 'lucide-react';
 import SidebarCategories from './SidebarCategories';
 import SidebarWidgets from './SidebarWidgets';
-import { Product } from '../types';
-import UiImage from './UiImage';
+import ProductCard from './ProductCard';
+import { CATALOG_PRODUCTS } from '../constants';
+import { useNavigation } from './NavigationContext';
 import { useCart } from './CartContext';
 import { useWishlist } from './WishlistContext';
+import { Product } from '../types';
 import { getImageUrl } from '../api';
-import { useCategories } from './useCategories';
+
+const RELATED_PRODUCTS = CATALOG_PRODUCTS.slice(0, 4);
 
 interface ProductPageProps {
   product: Product;
@@ -20,50 +20,56 @@ interface ProductPageProps {
 
 const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
   const [quantity, setQuantity] = useState(1);
+  const { navigateTo } = useNavigation();
   const { addToCart } = useCart();
-  const { isInWishlist, toggleWishlist } = useWishlist();
-  const { categories } = useCategories();
+  const { toggleWishlist, isInWishlist } = useWishlist();
 
-  const imageUrl = useMemo(() => getImageUrl(product.image), [product.image]);
-  const isLiked = isInWishlist(product.id);
-  const categoryTitle = useMemo(() => {
-    const match = categories.find((c) => c.slug === product.category);
-    return match?.title || product.category;
-  }, [categories, product.category]);
+  const currentProductId = product.id;
+  const isLiked = isInWishlist(currentProductId);
 
-  const handleDecrease = () => setQuantity((q) => Math.max(1, q - 1));
-  const handleIncrease = () => setQuantity((q) => q + 1);
+  const handleDecrease = () => {
+    if (quantity > 1) setQuantity(quantity - 1);
+  };
+
+  const handleIncrease = () => {
+    setQuantity(quantity + 1);
+  };
 
   const handleAddToCart = () => {
     addToCart({
-      id: product.id,
+      id: currentProductId,
       name: product.name,
-      model: product.slug ?? String(product.id),
+      model: product.model ?? product.slug ?? String(product.id),
       price: product.price,
       quantity,
-      image: imageUrl,
+      image: getImageUrl(product.image),
     });
   };
+
+  const mainImage = getImageUrl(product.image) || 'https://i.ibb.co/NdysLRCm/5f72290eb2e9285223eba7828a9153b2c9dcb3ed.png';
 
   return (
     <div className="w-full max-w-[1352px] mx-auto px-4 py-6">
       {/* Breadcrumbs */}
       <nav className="flex flex-wrap items-center gap-2 text-xs text-amber-400 mb-8">
-        <Link href="/" className="hover:text-amber-500">
-          <House size={16} className="fill-gray-400 text-gray-400 hover:text-amber-500 hover:fill-amber-500 transition-colors" />
-        </Link>
+        <button onClick={() => navigateTo('home')}>
+          <House
+            size={16}
+            className="fill-gray-400 text-gray-400 hover:text-amber-500 hover:fill-amber-500 transition-colors"
+          />
+        </button>
         <ChevronRight size={14} className="text-gray-300" />
-        <Link href="/catalog" className="text-amber-500 font-medium hover:underline">
+        <button onClick={() => navigateTo('catalog')} className="text-amber-500 font-medium hover:underline">
           Каталог
-        </Link>
-        {product.category && (
-          <>
-            <ChevronRight size={14} className="text-gray-300" />
-            <Link href={`/catalog?category=${product.category}`} className="text-amber-500 font-medium hover:underline">
-              {categoryTitle}
-            </Link>
-          </>
-        )}
+        </button>
+        <ChevronRight size={14} className="text-gray-300" />
+        <button onClick={() => navigateTo('catalog')} className="text-amber-500 font-medium hover:underline">
+          Побутова техніка
+        </button>
+        <ChevronRight size={14} className="text-gray-300" />
+        <button onClick={() => navigateTo('catalog')} className="text-amber-500 font-medium hover:underline">
+          Холодильник
+        </button>
         <ChevronRight size={14} className="text-gray-300" />
         <span className="text-amber-500 font-medium">{product.name}</span>
       </nav>
@@ -77,33 +83,50 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
 
         {/* Main Content */}
         <main className="flex-1 min-w-0">
+          {/* Product Details Section */}
           <div className="bg-white rounded-sm mb-12">
             <div className="flex flex-col md:flex-row gap-8">
               {/* Images Column */}
               <div className="w-full md:w-1/2">
-                <div className="border border-gray-100 p-8 flex items-center justify-center mb-4 h-[400px]">
-                  <UiImage
-                    src={imageUrl}
+                <div className="border border-gray-100 p-8 flex items-center justify-center mb-4 h-[500px]">
+                  <img
+                    src={mainImage}
                     alt={product.name}
-                    className="max-h-full object-contain"
-                    width={700}
-                    height={600}
+                    className="max-h-full max-w-full object-contain"
                   />
+                </div>
+                {/* Thumbnails */}
+                <div className="grid grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map((item) => (
+                    <div
+                      key={item}
+                      className="border border-gray-200 p-2 h-24 flex items-center justify-center cursor-pointer hover:border-amber-400 transition-colors"
+                    >
+                      <img
+                        src={mainImage}
+                        alt={`Thumb ${item}`}
+                        className="max-h-full object-contain"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
 
               {/* Info Column */}
-              <div className="w-full md:w-1/2 pt-2">
-                <div className="flex justify-between items-start mb-4">
-                  <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
+              <div className="w-full md:w-1/2 pt-2 pl-4">
+                <div className="flex justify-between items-start mb-2">
+                  <h1 className="text-xl md:text-2xl font-extrabold text-[#282828] uppercase leading-tight">
                     {product.name}
                   </h1>
                   <button
-                    onClick={() => toggleWishlist(product.id, product)}
-                    className="w-10 h-10 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-amber-500 hover:border-amber-400 rounded-sm transition-colors flex-shrink-0 ml-4"
-                    aria-label="Додати або прибрати з обраного"
+                    onClick={() => toggleWishlist(currentProductId, product)}
+                    className={`w-10 h-10 border flex items-center justify-center rounded-sm transition-colors flex-shrink-0 ml-4 ${
+                      isLiked
+                        ? 'border-amber-400 text-amber-500'
+                        : 'border-gray-200 text-gray-400 hover:text-amber-500 hover:border-amber-400'
+                    }`}
                   >
-                    <Heart size={20} className={isLiked ? 'fill-amber-500 text-amber-500' : ''} />
+                    <Heart size={20} className={isLiked ? 'fill-amber-500' : ''} />
                   </button>
                 </div>
 
@@ -113,74 +136,129 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
                     <Star
                       key={i}
                       size={14}
-                      className={i < (product.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-200 fill-gray-200'}
+                      className={
+                        i < (product.rating || 0)
+                          ? 'text-amber-400 fill-amber-400'
+                          : 'text-gray-200 fill-gray-200'
+                      }
                     />
                   ))}
                 </div>
 
                 {/* Price */}
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="text-4xl font-bold text-gray-900">
-                    ₴{product.price.toLocaleString('uk-UA')}
+                <div className="flex items-baseline gap-3 mb-8">
+                  <div className="text-4xl font-extrabold text-[#282828]">
+                    {product.price.toLocaleString('uk-UA')} ₴
                   </div>
                   {product.oldPrice && (
                     <div className="text-gray-400 text-lg line-through">
-                      ₴{product.oldPrice.toLocaleString('uk-UA')}
+                      {product.oldPrice.toLocaleString('uk-UA')} ₴
                     </div>
-                  )}
-                  {product.discount && product.discount > 0 && (
-                    <span className="text-sm font-bold text-amber-500 bg-amber-50 border border-amber-200 px-2 py-1 rounded">
-                      -{product.discount}%
-                    </span>
                   )}
                 </div>
 
-                {/* Quantity & Buy */}
-                <div className="mb-6">
-                  <span className="text-xs font-bold uppercase text-gray-900 block mb-3">Кількість</span>
-                  <div className="flex flex-col gap-4 items-start">
-                    <div className="flex items-center border border-gray-200 bg-gray-50 rounded-sm w-[260px] max-w-full">
-                      <button onClick={handleDecrease} className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-amber-500">
-                        <Minus size={16} />
-                      </button>
+                {/* Meta Data */}
+                <div className="space-y-3 mb-8 text-[13px]">
+                  <div className="flex items-center">
+                    <span className="text-[#8C8C8C] w-32">Бренд:</span>
+                    <span className="text-[#282828]">{product.brand || '—'}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-[#8C8C8C] w-32">Код товару:</span>
+                    <span className="text-[#282828]">
+                      {product.model || product.slug || String(product.id)}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-[#8C8C8C] w-32">Доступність:</span>
+                    <span className="text-[#282828] flex items-center gap-2">
+                      <Check size={16} strokeWidth={3} className="text-gray-400" />
+                      В наявності
+                    </span>
+                  </div>
+                </div>
+
+                {/* Color */}
+                <div className="mb-8">
+                  <span className="text-[13px] font-bold uppercase text-[#282828] block mb-3">
+                    ВИБЕРІТЬ КОЛІР
+                  </span>
+                  <button className="w-8 h-8 rounded-full bg-[#E0E0E0] border border-transparent hover:border-amber-400 focus:border-amber-400 outline-none transition-colors" />
+                </div>
+
+                {/* Quantity */}
+                <div className="mb-8">
+                  <span className="text-[13px] font-bold uppercase text-[#282828] block mb-3">
+                    КІЛЬКІСТЬ
+                  </span>
+                  <div className="bg-[#F0F0F0] rounded-[3px] p-[3px] flex items-center w-fit gap-[3px]">
+                    <button
+                      onClick={handleDecrease}
+                      className="w-[45px] h-[45px] flex items-center justify-center text-[#8C8C8C] hover:text-[#282828] transition-colors"
+                    >
+                      <Minus size={16} />
+                    </button>
+
+                    <div className="w-[60px] h-[45px] bg-white flex items-center justify-center">
                       <input
                         type="text"
                         value={quantity}
                         readOnly
-                        className="w-10 h-10 text-center bg-white text-sm font-bold text-gray-900 border-x border-gray-200 focus:outline-none"
+                        className="w-full text-center text-[15px] font-bold text-[#282828] bg-transparent focus:outline-none"
                       />
-                      <button onClick={handleIncrease} className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-amber-500">
-                        <Plus size={16} />
-                      </button>
                     </div>
 
                     <button
-                      onClick={handleAddToCart}
-                      className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-xs px-8 py-3 rounded-sm transition-colors flex items-center justify-center gap-2 w-[260px] max-w-full"
+                      onClick={handleIncrease}
+                      className="w-[45px] h-[45px] flex items-center justify-center text-[#8C8C8C] hover:text-[#282828] transition-colors"
                     >
-                      <ShoppingBasket size={18} />
-                      <span>Додати в кошик</span>
+                      <Plus size={16} />
                     </button>
                   </div>
+                </div>
+
+                {/* Buy Button */}
+                <div className="mb-6">
+                  <button
+                    onClick={handleAddToCart}
+                    className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-[13px] px-10 py-4 rounded-sm transition-colors shadow-md hover:shadow-lg tracking-wider flex items-center gap-2"
+                  >
+                    <ShoppingBasket size={18} />
+                    КУПИТИ
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Description */}
-            {product.description && (
-              <div className="mt-12 border-t border-gray-100 pt-8">
-                <div className="flex gap-8 border-b border-gray-200 mb-6">
-                  <button className="text-amber-500 font-bold uppercase text-sm border-b-2 border-amber-500 pb-2 -mb-[1px]">
-                    Опис
-                  </button>
-                </div>
-                <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {product.description}
-                  </ReactMarkdown>
-                </div>
+            {/* Description Tab */}
+            <div className="mt-16">
+              <div className="flex gap-8 border-b border-gray-200 mb-8">
+                <button className="text-amber-500 font-bold uppercase text-[13px] border-b-2 border-amber-500 pb-3 -mb-[1px]">
+                  Опис
+                </button>
               </div>
-            )}
+
+              {product.description && (
+                <>
+                  <h3 className="font-bold text-[#282828] text-[15px] mb-4">Опис товару</h3>
+                  <div className="text-[#777] text-[14px] leading-relaxed space-y-6 mb-10">
+                    <p>{product.description}</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Related Products */}
+          <div className="mb-12 border-t border-gray-200 pt-10">
+            <h3 className="text-[18px] font-bold uppercase text-[#282828] mb-8">
+              Тематичні товари
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-center">
+              {RELATED_PRODUCTS.map((related) => (
+                <ProductCard key={related.id} product={related} />
+              ))}
+            </div>
           </div>
         </main>
       </div>
