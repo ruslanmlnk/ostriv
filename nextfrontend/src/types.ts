@@ -1,9 +1,9 @@
 import React from 'react';
 
 export interface Media {
-  id: string;
+  id: string | number;
   url: string;
-  alt: string;
+  alt?: string;
 }
 
 export interface Product {
@@ -61,4 +61,19 @@ export interface OrderData {
     quantity: number;
   }[];
   total: number;
+}
+
+
+export interface NPCity {
+  Ref: string;
+  Present: string; 
+  MainDescription: string; 
+  Area: string;
+  Region: string;
+}
+
+export interface NPWarehouse {
+  Ref: string;
+  Description: string;
+  Number: string;
 }
