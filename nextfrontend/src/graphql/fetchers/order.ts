@@ -2,8 +2,8 @@
 
 import { OrderData } from '@/types'
 import { graphqlClient } from '../client'
-import { CreateOrderResponse } from '../types'
 import { CREATE_ORDER } from '../queries/createOrder'
+import { CreateOrderResponse } from '../types'
 
 const USE_MOCK = false
 
@@ -17,9 +17,9 @@ export const createOrderRequest = async (orderData: OrderData): Promise<{ succes
     const numericId = Number(productId)
 
     return {
+      product: Number.isFinite(numericId) ? numericId : undefined,
       productId,
       quantity: item.quantity,
-      ...(Number.isFinite(numericId) ? { product: numericId } : {}),
     }
   })
 
@@ -40,6 +40,6 @@ export const createOrderRequest = async (orderData: OrderData): Promise<{ succes
     data: payloadBody,
   })
 
-  const id = response.createOrder?.id ?? response.createOrder?.doc?.id ?? 'order-created'
+  const id = response.createOrder?.id ?? 'order-created'
   return { success: true, id }
 }

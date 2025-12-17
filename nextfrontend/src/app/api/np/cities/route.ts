@@ -1,60 +1,87 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { NPCity } from '@/types';
+
+const NOVA_API_URL = 'https://api.novaposhta.ua/v2.0/json/';
+const MIN_QUERY_LENGTH = 2;
+const RESULTS_LIMIT = 30;
+
+function toNpcity(item: any): NPCity {
+  const deliveryCity = item?.DeliveryCity || item?.CityRef || item?.cityRef || '';
+  const settlementRef = item?.SettlementRef || item?.Ref || item?.ref || '';
+  const ref = deliveryCity || settlementRef;
+
+  const present = item?.Present || item?.Description || item?.name || item?.MainDescription || '';
+  const mainDescription = item?.MainDescription || item?.Description || item?.name || present;
+  const area = item?.AreaDescription || item?.Area || item?.area || '';
+  const region = item?.RegionDescription || item?.Region || item?.region || '';
+
+  return {
+    Ref: String(ref),
+    Present: String(present),
+    MainDescription: String(mainDescription),
+    Area: String(area),
+    Region: String(region),
+    CityRef: deliveryCity ? String(deliveryCity) : undefined,
+    DeliveryCity: deliveryCity ? String(deliveryCity) : undefined,
+  };
+}
 
 export async function GET(request: NextRequest) {
-  const apiKey = process.env.NOVAPOSHTA_API_KEY;
+  const query = (request.nextUrl.searchParams.get('q') || '').trim();
+  if (query.length < MIN_QUERY_LENGTH) {
+    return NextResponse.json({ cities: [] });
+  }
 
+  const apiKey = process.env.NOVAPOSHTA_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: 'API key not configured' },
+      { cities: [], error: 'NOVAPOSHTA_API_KEY не налаштовано' },
       { status: 500 }
     );
   }
 
   try {
-    const response = await fetch('https://api.novaposhta.ua/v2.0/json/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const payload = {
+      apiKey,
+      modelName: 'Address',
+      calledMethod: 'searchSettlements',
+      methodProperties: {
+        CityName: query,
+        Limit: RESULTS_LIMIT,
+        Language: 'UA',
       },
-      body: JSON.stringify({
-        modelName: 'Address',
-        calledMethod: 'getCities',
-        apiKey: apiKey,
-      }),
-      // Кешування на 24 години
-      next: { revalidate: 86400 },
+    };
+
+    const res = await fetch(NOVA_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      cache: 'no-store',
     });
 
-    const data = await response.json();
-
-    if (!data.success) {
+    const data = await res.json();
+    if (!data?.success || !Array.isArray(data?.data)) {
+      const errors = Array.isArray(data?.errors) ? data.errors : [];
       return NextResponse.json(
-        { error: 'Failed to fetch cities' },
-        { status: 500 }
+        { cities: [], error: errors.length ? errors.join('; ') : 'Помилка відповіді Nova Poshta' },
+        { status: res.status || 502 }
       );
     }
 
-    // Оптимізація даних - залишаємо тільки необхідні поля
-    const optimizedData = data.data.map((city: any) => ({
-      value: city.Description,
-      valueRu: city.DescriptionRu,
-      label: city.Description,
-      labelRu: city.DescriptionRu,
-      ref: city.Ref,
-    }));
-
-    return NextResponse.json(
-      { success: true, data: optimizedData },
-      {
-        headers: {
-          'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=172800',
-        },
-      }
+    const addresses: any[] = data.data.flatMap((entry: any) =>
+      Array.isArray(entry?.Addresses) ? entry.Addresses : [entry]
     );
+
+    const cities = addresses
+      .slice(0, RESULTS_LIMIT)
+      .map((item) => toNpcity(item))
+      .filter((city) => city.Ref && city.Present);
+
+    return NextResponse.json({ cities });
   } catch (error) {
-    console.error('Error fetching cities:', error);
+    console.error('Error querying Nova Poshta cities:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { cities: [], error: 'Не вдалося завантажити міста' },
       { status: 500 }
     );
   }

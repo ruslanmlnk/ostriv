@@ -70,10 +70,16 @@ export interface NPCity {
   MainDescription: string; 
   Area: string;
   Region: string;
+  SettlementId?: number;
+  CityRef?: string;
+  DeliveryCity?: string;
 }
 
 export interface NPWarehouse {
   Ref: string;
   Description: string;
   Number: string;
+  Name?: string;
+  Address?: string;
+  DivisionCategory?: string;
 }

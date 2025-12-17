@@ -35,6 +35,10 @@ const CheckoutPage: React.FC = () => {
   const [isCitiesLoading, setIsCitiesLoading] = useState(false);
   const [isWhLoading, setIsWhLoading] = useState(false);
 
+  const [citiesError, setCitiesError] = useState<string | null>(null);
+  const [warehousesError, setWarehousesError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const citySearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -65,6 +69,7 @@ const CheckoutPage: React.FC = () => {
     setCityQuery(value);
     setSelectedCity(null);
     setWarehouses([]);
+    setWarehousesError(null);
     setShowCityDropdown(true);
 
     if (citySearchTimeout.current) clearTimeout(citySearchTimeout.current);
@@ -73,12 +78,19 @@ const CheckoutPage: React.FC = () => {
       const q = value.trim();
       if (q.length < 2) {
         setCities([]);
+        setCitiesError(null);
         return;
       }
 
       setIsCitiesLoading(true);
-      const found = await novaPoshtaApi.searchSettlements(q);
-      setCities(found);
+      setCitiesError(null);
+      try {
+        const found = await novaPoshtaApi.searchSettlements(q);
+        setCities(found);
+      } catch (error) {
+        setCities([]);
+        setCitiesError(error instanceof Error ? error.message : 'Не вдалося завантажити міста');
+      }
       setIsCitiesLoading(false);
     }, 300);
   };
@@ -94,37 +106,113 @@ const CheckoutPage: React.FC = () => {
     setShowCityDropdown(false);
 
     setIsWhLoading(true);
-    const wh = await novaPoshtaApi.getWarehouses(city.Ref);
-    setWarehouses(wh);
+    setWarehousesError(null);
+    try {
+      const wh = await novaPoshtaApi.getWarehouses(
+        city.CityRef || city.Ref || String(city.SettlementId || ''),
+        city.MainDescription || display
+      );
+      setWarehouses(wh);
+      if (wh.length === 0) {
+        setWarehousesError('Відділення не знайдено');
+      }
+    } catch (error) {
+      setWarehouses([]);
+      setWarehousesError(error instanceof Error ? error.message : 'Не вдалося завантажити відділення');
+    }
     setIsWhLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const orderData = {
-      customer: {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        email: formData.email,
-      },
-      delivery: {
-        city: formData.city, // можна зберігати text
-        warehouse: formData.warehouse, // Description
-        method: 'nova_poshta',
-        // Якщо хочеш — можеш також відправляти cityRef:
-        // cityRef: selectedCity?.Ref,
-      },
-      paymentMethod: formData.paymentMethod,
-      items: items.map((item) => ({ product_id: item.id, quantity: item.quantity })),
-      total: totalAmount,
-    };
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    const response = await api.createOrder(orderData);
-    if (response) {
+    try {
+      const orderData = {
+        customer: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          email: formData.email,
+        },
+        delivery: {
+          city: formData.city, // можна зберігати text
+          warehouse: formData.warehouse, // Description
+          method: 'nova_poshta',
+          // Якщо хочеш — можеш також відправляти cityRef:
+          // cityRef: selectedCity?.Ref,
+        },
+        paymentMethod: formData.paymentMethod,
+        items: items.map((item) => ({ product_id: item.id, quantity: item.quantity })),
+        total: totalAmount,
+      };
+
+      const response = await api.createOrder(orderData);
+      if (!response?.success) {
+        alert('Не вдалося створити замовлення. Спробуйте ще раз.');
+        return;
+      }
+
+      if (formData.paymentMethod === 'card') {
+        const checkoutRes = await fetch('/api/liqpay/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: response.id,
+            amount: totalAmount,
+          }),
+        });
+
+        const checkoutJson = await checkoutRes.json().catch(() => null);
+        const endpoint = checkoutJson?.endpoint;
+        const data = checkoutJson?.data;
+        const signature = checkoutJson?.signature;
+
+        if (
+          !checkoutRes.ok ||
+          typeof endpoint !== 'string' ||
+          !endpoint ||
+          typeof data !== 'string' ||
+          !data ||
+          typeof signature !== 'string' ||
+          !signature
+        ) {
+          const message = checkoutJson?.error || 'Не вдалося ініціалізувати оплату LiqPay.';
+          alert(message);
+          return;
+        }
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = endpoint;
+        form.acceptCharset = 'utf-8';
+
+        const dataInput = document.createElement('input');
+        dataInput.type = 'hidden';
+        dataInput.name = 'data';
+        dataInput.value = data;
+
+        const signatureInput = document.createElement('input');
+        signatureInput.type = 'hidden';
+        signatureInput.name = 'signature';
+        signatureInput.value = signature;
+
+        form.appendChild(dataInput);
+        form.appendChild(signatureInput);
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
+
       alert('Замовлення успішно оформлено!');
       navigateTo('home');
+    } catch (error) {
+      console.error('Checkout submit error:', error);
+      alert(error instanceof Error ? error.message : 'Сталася помилка. Спробуйте ще раз.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -330,6 +418,8 @@ const CheckoutPage: React.FC = () => {
                     <ul className="absolute z-20 left-0 top-full w-full bg-white border border-gray-200 max-h-60 overflow-y-auto shadow-lg mt-1">
                       {isCitiesLoading ? (
                         <li className="px-4 py-2 text-sm text-gray-400">Завантаження...</li>
+                      ) : citiesError ? (
+                        <li className="px-4 py-2 text-sm text-red-600">{citiesError}</li>
                       ) : cities.length > 0 ? (
                         cities.map((city) => (
                           <li
@@ -369,7 +459,7 @@ const CheckoutPage: React.FC = () => {
                     required
                   >
                     <option value="" className="text-gray-500">
-                      {isWhLoading ? 'Завантаження відділень...' : 'Виберіть відділення'}
+                      {isWhLoading ? 'Завантаження відділень...' : warehousesError || 'Виберіть відділення'}
                     </option>
 
                     {warehouses.map((wh) => (
@@ -418,7 +508,7 @@ const CheckoutPage: React.FC = () => {
                     onChange={handleInputChange}
                     className="text-amber-400 focus:ring-amber-400 w-4 h-4"
                   />
-                  <span className="text-sm text-gray-900">Онлайн–платежі Visa i MasterCard (LiqPay)</span>
+                  <span className="text-sm text-gray-900">Онлайн-оплата карткою (LiqPay)</span>
                 </label>
               </div>
             </div>
@@ -437,9 +527,10 @@ const CheckoutPage: React.FC = () => {
 
           <button
             type="submit"
-            className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-xs px-8 py-4 rounded-sm shadow-md hover:shadow-lg transition-colors w-full md:w-auto"
+            disabled={isSubmitting}
+            className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-xs px-8 py-4 rounded-sm shadow-md hover:shadow-lg transition-colors w-full md:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            ОФОРМИТИ ЗАМОВЛЕННЯ
+            {isSubmitting ? 'Обробка…' : 'ОФОРМИТИ ЗАМОВЛЕННЯ'}
           </button>
         </div>
       </form>
