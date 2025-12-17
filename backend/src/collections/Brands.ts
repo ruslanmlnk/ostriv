@@ -1,11 +1,11 @@
 import type { CollectionConfig } from 'payload'
 import { slugify } from '../utils/slugify'
 
-export const Categories: CollectionConfig = {
-  slug: 'categories',
+export const Brands: CollectionConfig = {
+  slug: 'brands',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', 'createdAt'],
+    defaultColumns: ['title', 'slug'],
   },
   access: {
     read: () => true,
@@ -22,12 +22,6 @@ export const Categories: CollectionConfig = {
       required: false,
       unique: true,
       index: true,
-    },
-    {
-      name: 'image',
-      type: 'upload',
-      relationTo: 'media',
-      required: false,
     },
   ],
   hooks: {

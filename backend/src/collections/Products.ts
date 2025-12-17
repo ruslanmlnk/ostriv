@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { slugify } from '../utils/slugify'
 
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -16,11 +17,22 @@ export const Products: CollectionConfig = {
       required: true,
     },
     {
+      name: 'model',
+      type: 'text',
+      label: 'Модель',
+    },
+    {
       name: 'slug',
       type: 'text',
-      required: true,
+      required: false,
       unique: true,
       index: true,
+    },
+    {
+      name: 'brand',
+      type: 'relationship',
+      relationTo: 'brands',
+      required: false,
     },
     {
       name: 'category',
@@ -71,5 +83,23 @@ export const Products: CollectionConfig = {
       relationTo: 'media',
       required: true,
     },
+    {
+      name: 'colors',
+      type: 'relationship',
+      relationTo: 'colors',
+      hasMany: true,
+      label: 'Кольори (chips)',
+    },
   ],
+  hooks: {
+    beforeValidate: [
+      ({ data }) => {
+        if (data?.slug) return data;
+        const src = (data?.name as string) || '';
+        if (!src.trim()) return data;
+        const slug = slugify(src);
+        return slug ? { ...data, slug } : data;
+      },
+    ],
+  },
 }

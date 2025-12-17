@@ -72,6 +72,8 @@ export interface Config {
     categories: Category;
     products: Product;
     orders: Order;
+    colors: Color;
+    brands: Brand;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +86,8 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
+    colors: ColorsSelect<false> | ColorsSelect<true>;
+    brands: BrandsSelect<false> | BrandsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -172,7 +176,7 @@ export interface Media {
 export interface Category {
   id: number;
   title: string;
-  slug: string;
+  slug?: string | null;
   image?: (number | null) | Media;
   updatedAt: string;
   createdAt: string;
@@ -184,7 +188,9 @@ export interface Category {
 export interface Product {
   id: number;
   name: string;
-  slug: string;
+  model?: string | null;
+  slug?: string | null;
+  brand?: (number | null) | Brand;
   category: number | Category;
   price: number;
   oldPrice?: number | null;
@@ -194,6 +200,30 @@ export interface Product {
   isHit?: boolean | null;
   isNew?: boolean | null;
   image: number | Media;
+  colors?: (number | Color)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brands".
+ */
+export interface Brand {
+  id: number;
+  title: string;
+  slug?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "colors".
+ */
+export interface Color {
+  id: number;
+  title: string;
+  slug?: string | null;
+  hex?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -266,6 +296,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'orders';
         value: number | Order;
+      } | null)
+    | ({
+        relationTo: 'colors';
+        value: number | Color;
+      } | null)
+    | ({
+        relationTo: 'brands';
+        value: number | Brand;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -366,7 +404,9 @@ export interface CategoriesSelect<T extends boolean = true> {
  */
 export interface ProductsSelect<T extends boolean = true> {
   name?: T;
+  model?: T;
   slug?: T;
+  brand?: T;
   category?: T;
   price?: T;
   oldPrice?: T;
@@ -376,6 +416,7 @@ export interface ProductsSelect<T extends boolean = true> {
   isHit?: T;
   isNew?: T;
   image?: T;
+  colors?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -403,6 +444,27 @@ export interface OrdersSelect<T extends boolean = true> {
       };
   total?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "colors_select".
+ */
+export interface ColorsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  hex?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "brands_select".
+ */
+export interface BrandsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
   updatedAt?: T;
   createdAt?: T;
 }
