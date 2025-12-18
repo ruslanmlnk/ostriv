@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { useCategories } from './useCategories';
 import { useNavigation } from './NavigationContext';
+import { useBrands } from './useBrands';
+import { useColors } from './useColors';
 
 interface FilterOption {
   label: string;
@@ -127,12 +129,26 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
 }) => {
   const { categories } = useCategories();
   const { navigateTo } = useNavigation();
+  const { brands } = useBrands();
+  const { colors } = useColors();
 
   const categoryOptions: FilterOption[] = categories.map((cat) => ({
     label: cat.title,
     slug: cat.slug,
     count: categoryCounts?.[cat.slug] ?? 0,
     checked: selectedSlug ? cat.slug === selectedSlug : false,
+  }));
+
+  const brandOptions: FilterOption[] = brands.map((brand) => ({
+    label: brand.title,
+    slug: brand.slug,
+    count: 0,
+  }));
+
+  const colorOptions: FilterOption[] = colors.map((color) => ({
+    label: color.title,
+    slug: color.slug,
+    count: 0,
   }));
 
   const handleCategoryChange = (opt: FilterOption) => {
@@ -165,26 +181,10 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
       />
 
       {/* Manufacturer */}
-      <FilterGroup
-        title="Виробник"
-        options={[
-          { label: 'Philips', count: 10 },
-          { label: 'Samsung', count: 8 },
-          { label: 'LG', count: 5 },
-        ]}
-      />
+      <FilterGroup title="Бренд" options={brandOptions} />
 
       {/* Color */}
-      <FilterGroup
-        title="Колір"
-        options={[
-          { label: 'Білий', count: 1 },
-          { label: 'Чорний', count: 10 },
-          { label: 'Сріблястий', count: 40 },
-          { label: 'Сірий', count: 10 },
-          { label: 'Синій', count: 10 },
-        ]}
-      />
+      <FilterGroup title="Колір" options={colorOptions} />
     </div>
   );
 };

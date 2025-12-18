@@ -1,7 +1,9 @@
-import { Product, Category, OrderData, Media } from './types';
+import { Product, Category, OrderData, Media, Brand, Color } from './types';
 import { HIT_PRODUCTS, NEW_PRODUCTS, CATALOG_PRODUCTS } from './constants';
 import { PAYLOAD_URL } from './graphql/client';
 import { fetchCategories } from './graphql/fetchers/categories';
+import { fetchBrands } from './graphql/fetchers/brands';
+import { fetchColors } from './graphql/fetchers/colors';
 import { fetchProducts } from './graphql/fetchers/products';
 import { createOrderRequest } from './graphql/fetchers/order';
 import { PayloadMedia } from './graphql/types';
@@ -34,6 +36,26 @@ export const api = {
       return categories;
     } catch (error) {
       console.warn('Payload Connection Failed (Categories).', error);
+      return [];
+    }
+  },
+
+  getBrands: async (): Promise<Brand[]> => {
+    try {
+      const brands = await fetchBrands();
+      return brands;
+    } catch (error) {
+      console.warn('Payload Connection Failed (Brands).', error);
+      return [];
+    }
+  },
+
+  getColors: async (): Promise<Color[]> => {
+    try {
+      const colors = await fetchColors();
+      return colors;
+    } catch (error) {
+      console.warn('Payload Connection Failed (Colors).', error);
       return [];
     }
   },
@@ -75,7 +97,7 @@ export const api = {
     } catch (error) {
       console.error('API Error (Create Order):', error);
       alert('Не вдалося створити замовлення у Payload. Спробуйте ще раз пізніше.');
-      return { success: true, id: 'mock-order-id' };
+      return { success: false, id: 'mock-order-id' };
     }
   }
 };

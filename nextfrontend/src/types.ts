@@ -10,15 +10,20 @@ export interface Product {
   id: number | string; // Payload IDs are usually strings
   slug?: string;
   name: string;
+  model?: string;
+  brand?: string;
   category: string; // Or Category object if populated
   price: number;
+  stock?: number;
   oldPrice?: number;
   image: string | Media; // Can be URL string or Payload Media object
+  gallery?: string[];
   rating: number;
   isNew?: boolean;
   isHit?: boolean;
   discount?: number;
   description?: string;
+  colors?: Color[];
 }
 
 export interface Category {
@@ -26,6 +31,19 @@ export interface Category {
   title: string;
   image: string | Media;
   slug: string;
+}
+
+export interface Brand {
+  id: number | string;
+  title: string;
+  slug: string;
+}
+
+export interface Color {
+  id: number | string;
+  title: string;
+  slug: string;
+  hex?: string;
 }
 
 export interface Feature {

@@ -1,18 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
-import { House, ChevronRight, Heart, Star, Minus, Plus, ShoppingBasket, Check } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { House, ChevronRight, Heart, Star, Minus, Plus, ShoppingBasket, Check, X } from 'lucide-react';
 import SidebarCategories from './SidebarCategories';
 import SidebarWidgets from './SidebarWidgets';
 import ProductCard from './ProductCard';
-import { CATALOG_PRODUCTS } from '../constants';
 import { useNavigation } from './NavigationContext';
 import { useCart } from './CartContext';
 import { useWishlist } from './WishlistContext';
 import { Product } from '../types';
-import { getImageUrl } from '../api';
-
-const RELATED_PRODUCTS = CATALOG_PRODUCTS.slice(0, 4);
+import { api, getImageUrl } from '../api';
 
 interface ProductPageProps {
   product: Product;
@@ -20,12 +17,31 @@ interface ProductPageProps {
 
 const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
   const [quantity, setQuantity] = useState(1);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const { navigateTo } = useNavigation();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
   const currentProductId = product.id;
   const isLiked = isInWishlist(currentProductId);
+  const productTitle = product.model ? `${product.name} ${product.model}` : product.name;
+  const stockCount = typeof product.stock === 'number' ? product.stock : 0;
+  const isInStock = stockCount > 0;
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [product.id]);
+
+  useEffect(() => {
+    const loadRelated = async () => {
+      const products = await api.getProducts('all', product.category);
+      const filtered = products.filter((p) => p.id !== product.id);
+      setRelatedProducts(filtered.slice(0, 4));
+    };
+
+    loadRelated();
+  }, [product.category, product.id]);
 
   const handleDecrease = () => {
     if (quantity > 1) setQuantity(quantity - 1);
@@ -46,7 +62,16 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
     });
   };
 
-  const mainImage = getImageUrl(product.image) || 'https://i.ibb.co/NdysLRCm/5f72290eb2e9285223eba7828a9153b2c9dcb3ed.png';
+  const baseImage =
+    getImageUrl(product.image) ||
+    'https://i.ibb.co/NdysLRCm/5f72290eb2e9285223eba7828a9153b2c9dcb3ed.png';
+
+  const galleryImages = [
+    baseImage,
+    ...((product.gallery ?? []).map((img) => getImageUrl(img))),
+  ].filter((url, index, arr) => Boolean(url) && arr.indexOf(url) === index);
+
+  const mainImage = galleryImages[activeImageIndex] || baseImage;
 
   return (
     <div className="w-full max-w-[1352px] mx-auto px-4 py-6">
@@ -71,7 +96,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
           Холодильник
         </button>
         <ChevronRight size={14} className="text-gray-300" />
-        <span className="text-amber-500 font-medium">{product.name}</span>
+        <span className="text-amber-500 font-medium">{productTitle}</span>
       </nav>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -91,23 +116,27 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
                 <div className="border border-gray-100 p-8 flex items-center justify-center mb-4 h-[500px]">
                   <img
                     src={mainImage}
-                    alt={product.name}
+                    alt={productTitle}
                     className="max-h-full max-w-full object-contain"
                   />
                 </div>
                 {/* Thumbnails */}
                 <div className="grid grid-cols-4 gap-4">
-                  {[1, 2, 3, 4].map((item) => (
-                    <div
-                      key={item}
-                      className="border border-gray-200 p-2 h-24 flex items-center justify-center cursor-pointer hover:border-amber-400 transition-colors"
+                  {galleryImages.map((imageUrl, index) => (
+                    <button
+                      key={`${imageUrl}-${index}`}
+                      type="button"
+                      onClick={() => setActiveImageIndex(index)}
+                      className={`border p-2 h-24 flex items-center justify-center cursor-pointer transition-colors ${
+                        index === activeImageIndex ? 'border-amber-400' : 'border-gray-200 hover:border-amber-400'
+                      }`}
                     >
                       <img
-                        src={mainImage}
-                        alt={`Thumb ${item}`}
+                        src={imageUrl}
+                        alt={`${productTitle} - ${index + 1}`}
                         className="max-h-full object-contain"
                       />
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -116,7 +145,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
               <div className="w-full md:w-1/2 pt-2 pl-4">
                 <div className="flex justify-between items-start mb-2">
                   <h1 className="text-xl md:text-2xl font-extrabold text-[#282828] uppercase leading-tight">
-                    {product.name}
+                    {productTitle}
                   </h1>
                   <button
                     onClick={() => toggleWishlist(currentProductId, product)}
@@ -171,9 +200,13 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
                   </div>
                   <div className="flex items-center">
                     <span className="text-[#8C8C8C] w-32">Доступність:</span>
-                    <span className="text-[#282828] flex items-center gap-2">
-                      <Check size={16} strokeWidth={3} className="text-gray-400" />
-                      В наявності
+                    <span className={`flex items-center gap-2 ${isInStock ? 'text-[#282828]' : 'text-gray-400'}`}>
+                      {isInStock ? (
+                        <Check size={16} strokeWidth={3} className="text-green-500" />
+                      ) : (
+                        <X size={16} strokeWidth={3} className="text-red-400" />
+                      )}
+                      {isInStock ? 'В наявності' : 'Немає в наявності'}
                     </span>
                   </div>
                 </div>
@@ -183,7 +216,26 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
                   <span className="text-[13px] font-bold uppercase text-[#282828] block mb-3">
                     ВИБЕРІТЬ КОЛІР
                   </span>
-                  <button className="w-8 h-8 rounded-full bg-[#E0E0E0] border border-transparent hover:border-amber-400 focus:border-amber-400 outline-none transition-colors" />
+                  <div className="flex flex-wrap items-center gap-2">
+                    {product.colors && product.colors.length > 0 ? (
+                      product.colors.map((color) => {
+                        const rawHex = typeof color.hex === 'string' ? color.hex.trim() : '';
+                        const hex = /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(rawHex) ? rawHex : '#E0E0E0';
+                        return (
+                          <button
+                            key={String(color.id ?? color.slug ?? color.title)}
+                            type="button"
+                            title={color.title}
+                            aria-label={color.title}
+                            className="w-8 h-8 rounded-full border border-gray-200 hover:border-amber-400 focus:border-amber-400 outline-none transition-colors"
+                            style={{ backgroundColor: hex }}
+                          />
+                        );
+                      })
+                    ) : (
+                      <span className="text-sm text-gray-400">—</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Quantity */}
@@ -255,7 +307,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
               Тематичні товари
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-center">
-              {RELATED_PRODUCTS.map((related) => (
+              {relatedProducts.map((related) => (
                 <ProductCard key={related.id} product={related} />
               ))}
             </div>

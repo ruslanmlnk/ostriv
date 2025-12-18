@@ -5,7 +5,7 @@ export const Products: CollectionConfig = {
   slug: 'products',
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'price', 'category', 'isHit', 'isNew'],
+    defaultColumns: ['name', 'price', 'stock', 'category', 'isHit', 'isNew'],
   },
   access: {
     read: () => true,
@@ -47,6 +47,13 @@ export const Products: CollectionConfig = {
       min: 0,
     },
     {
+      name: 'stock',
+      type: 'number',
+      label: 'Запас товару',
+      min: 0,
+      defaultValue: 0,
+    },
+    {
       name: 'oldPrice',
       type: 'number',
     },
@@ -82,6 +89,13 @@ export const Products: CollectionConfig = {
       type: 'upload',
       relationTo: 'media',
       required: true,
+    },
+    {
+      name: 'gallery',
+      type: 'upload',
+      relationTo: 'media',
+      hasMany: true,
+      label: 'Галерея',
     },
     {
       name: 'colors',

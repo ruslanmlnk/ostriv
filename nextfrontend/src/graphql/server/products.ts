@@ -1,7 +1,7 @@
 import { Product } from '@/types'
 import { getImageUrl } from '@/api'
 import { graphqlClient } from '../client'
-import { PayloadCategory, PayloadProduct } from '../types'
+import { PayloadBrand, PayloadCategory, PayloadColor, PayloadProduct } from '../types'
 import { CATALOG_PRODUCTS, HIT_PRODUCTS, NEW_PRODUCTS } from '@/constants'
 import { GET_PRODUCTS } from '../queries/products'
 
@@ -22,6 +22,39 @@ const normalizeProduct = (
   if (!item) return null
 
   const media = Array.isArray(item.image) ? item.image[0] : item.image
+  const galleryUrls = Array.isArray(item.gallery)
+    ? item.gallery
+        .map((galleryItem) => {
+          if (!galleryItem || typeof galleryItem === 'number') return ''
+          return getImageUrl(galleryItem as any)
+        })
+        .filter((url) => Boolean(url))
+    : []
+
+  const brandField = item.brand
+  const brandTitle =
+    typeof brandField === 'object' && brandField !== null && 'title' in brandField
+      ? (brandField as PayloadBrand).title ?? undefined
+      : undefined
+
+  const colors = Array.isArray(item.colors)
+    ? item.colors
+        .map((colorField) => {
+          if (!colorField || typeof colorField === 'string' || typeof colorField === 'number') return null
+          const color = colorField as PayloadColor
+          const id = color.id ?? color.slug ?? color.title ?? ''
+          const title = color.title ?? ''
+          if (!id || !title) return null
+
+          return {
+            id,
+            title,
+            slug: color.slug ?? '',
+            hex: color.hex ?? undefined,
+          }
+        })
+        .filter((c): c is NonNullable<typeof c> => Boolean(c))
+    : []
   const categoryField = item.category
   const categorySlug =
     typeof categoryField === 'string'
@@ -41,8 +74,11 @@ const normalizeProduct = (
     id: item.id ?? item.slug ?? item.name ?? '',
     slug: item.slug ?? '',
     name: item.name ?? '',
+    model: item.model ?? undefined,
+    brand: brandTitle,
     category: categorySlug,
     price: item.price ?? 0,
+    stock: item.stock ?? 0,
     oldPrice: item.oldPrice ?? undefined,
     rating: item.rating ?? 0,
     description: item.description ?? '',
@@ -50,6 +86,8 @@ const normalizeProduct = (
     isNew: Boolean(item.isNew),
     discount,
     image: getImageUrl(media) || '',
+    gallery: galleryUrls,
+    colors,
   }
 }
 

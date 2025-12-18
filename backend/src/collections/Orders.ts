@@ -1,4 +1,22 @@
 import type { CollectionConfig } from 'payload'
+import { parse } from 'graphql'
+
+const isCreateOrderMutation = (query: unknown) => {
+  if (typeof query !== 'string' || !query.trim()) return false
+  try {
+    const document = parse(query)
+    return document.definitions.some((definition) => {
+      if (definition.kind !== 'OperationDefinition') return false
+      if (definition.operation !== 'mutation') return false
+      return definition.selectionSet.selections.some((selection) => {
+        if (selection.kind !== 'Field') return false
+        return selection.name.value === 'createOrder'
+      })
+    })
+  } catch {
+    return false
+  }
+}
 
 export const Orders: CollectionConfig = {
   slug: 'orders',
@@ -7,7 +25,24 @@ export const Orders: CollectionConfig = {
     defaultColumns: ['status', 'total', 'createdAt'],
   },
   access: {
-    read: ({ req }) => Boolean(req.user),
+    read: ({ req }) => {
+      if (req.user) return true
+
+      const method = typeof req.method === 'string' ? req.method.toUpperCase() : ''
+      const url =
+        typeof (req as any).originalUrl === 'string'
+          ? (req as any).originalUrl
+          : typeof req.url === 'string'
+            ? req.url
+            : ''
+
+      if (method === 'POST' && url.includes('/api/orders')) return true
+      if (method === 'POST' && url.includes('/api/graphql') && isCreateOrderMutation((req as any).body?.query)) {
+        return true
+      }
+
+      return false
+    },
     create: () => true,
   },
   fields: [

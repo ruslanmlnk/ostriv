@@ -24,6 +24,7 @@ const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts
   const [allProducts, setAllProducts] = useState<Product[]>(initialProducts || []);
   const [loading, setLoading] = useState(!initialProducts || initialProducts.length === 0);
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(categorySlug);
+  const [sort, setSort] = useState<'default' | 'price-asc' | 'price-desc'>('default');
   const { categories } = useCategories(initialCategories);
 
   useEffect(() => {
@@ -52,6 +53,16 @@ const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts
     if (!selectedCategory) return allProducts;
     return allProducts.filter((p) => p.category === selectedCategory);
   }, [allProducts, selectedCategory]);
+
+  const sortedProducts = useMemo(() => {
+    const items = [...filteredProducts];
+    if (sort === 'price-asc') {
+      items.sort((a, b) => a.price - b.price);
+    } else if (sort === 'price-desc') {
+      items.sort((a, b) => b.price - a.price);
+    }
+    return items;
+  }, [filteredProducts, sort]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -111,19 +122,33 @@ const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <h1 className="text-2xl font-bold text-gray-900">{currentCategoryTitle}</h1>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-gray-800">Сортування:</span>
-              <div className="relative border border-gray-200 rounded-sm bg-white px-3 py-1.5 min-w-[140px] flex items-center justify-between cursor-pointer">
-                <span className="text-xs text-gray-600">За замовчуванням</span>
-                <ChevronDown size={14} className="text-amber-500" />
-              </div>
-            </div>
+           <div className="flex items-center gap-2">
+  <span className="text-xs font-bold text-gray-800">Сортування:</span>
+  <div className="relative inline-flex items-center border border-gray-200 rounded-sm bg-white px-3 py-1.5 min-w-[200px]">
+    <select
+      className="appearance-none bg-transparent text-xs text-gray-700 focus:outline-none w-full pr-6 cursor-pointer"
+      value={sort}
+      onChange={(e) =>
+        setSort(e.target.value as 'default' | 'price-asc' | 'price-desc')
+      }
+    >
+      <option value="default">За замовчуванням</option>
+      <option value="price-asc">За ціною (зростання)</option>
+      <option value="price-desc">За ціною (спадання)</option>
+    </select>
+    <ChevronDown
+      size={14}
+      className="pointer-events-none absolute right-3 text-gray-400"
+    />
+  </div>
+</div>
+
           </div>
 
           {/* Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-            {!loading && filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => <ProductCard key={product.id} product={product} />)
+            {!loading && sortedProducts.length > 0 ? (
+              sortedProducts.map((product) => <ProductCard key={product.id} product={product} />)
             ) : (
               <div className="col-span-3 py-10 text-center text-gray-500">
                 {loading ? 'Завантаження...' : 'Товарів не знайдено'}

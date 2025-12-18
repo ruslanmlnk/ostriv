@@ -16,6 +16,25 @@ const STORAGE_KEY = 'ostriv_cart';
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const stripModelFromName = (name: string, model: string) => {
+  const trimmedName = (name ?? '').trim();
+  const trimmedModel = (model ?? '').trim();
+
+  if (!trimmedName || !trimmedModel) return trimmedName;
+
+  const pattern = new RegExp(`\\s*(?:[-–—|:]\\s*)?${escapeRegExp(trimmedModel)}\\s*$`, 'i');
+  const stripped = trimmedName.replace(pattern, '').trim();
+  return stripped || trimmedName;
+};
+
+const normalizeCartItem = (item: CartItem): CartItem => ({
+  ...item,
+  name: stripModelFromName(item.name, item.model),
+  model: item.model?.trim?.() ?? String(item.model ?? ''),
+});
+
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
 
@@ -23,7 +42,8 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        setItems(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setItems(Array.isArray(parsed) ? parsed.map(normalizeCartItem) : []);
       } catch {
         setItems([]);
       }
@@ -35,16 +55,17 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [items]);
 
   const addToCart = (newItem: CartItem) => {
+    const normalizedNewItem = normalizeCartItem(newItem);
     setItems(prev => {
-      const existing = prev.find(item => item.id === newItem.id);
+      const existing = prev.find(item => item.id === normalizedNewItem.id);
       if (existing) {
         return prev.map(item => 
-          item.id === newItem.id 
-            ? { ...item, quantity: item.quantity + newItem.quantity }
+          item.id === normalizedNewItem.id 
+            ? { ...item, quantity: item.quantity + normalizedNewItem.quantity }
             : item
         );
       }
-      return [...prev, newItem];
+      return [...prev, normalizedNewItem];
     });
   };
 
@@ -79,4 +100,3 @@ export const useCart = () => {
   }
   return context;
 };
-

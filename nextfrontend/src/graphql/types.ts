@@ -17,11 +17,27 @@ export interface PayloadCategory {
   image?: PayloadMedia | string | null;
 }
 
+export interface PayloadBrand {
+  id?: PayloadID;
+  title?: string | null;
+  slug?: string | null;
+}
+
+export interface PayloadColor {
+  id?: PayloadID;
+  title?: string | null;
+  slug?: string | null;
+  hex?: string | null;
+}
+
 export interface PayloadProduct {
   id?: PayloadID;
   slug?: string | null;
   name?: string | null;
+  model?: string | null;
+  brand?: PayloadBrand | PayloadID | null;
   price?: number | null;
+  stock?: number | null;
   oldPrice?: number | null;
   rating?: number | null;
   description?: string | null;
@@ -29,7 +45,9 @@ export interface PayloadProduct {
   isNew?: boolean | null;
   discount?: number | null;
   image?: PayloadMedia | PayloadMedia[] | string | null;
+  gallery?: (PayloadMedia | PayloadID)[] | null;
   category?: PayloadCategory | PayloadID | null;
+  colors?: (PayloadColor | PayloadID)[] | null;
 }
 
 export interface PayloadListResponse<T> {

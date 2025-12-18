@@ -193,6 +193,7 @@ export interface Product {
   brand?: (number | null) | Brand;
   category: number | Category;
   price: number;
+  stock?: number | null;
   oldPrice?: number | null;
   rating?: number | null;
   discount?: number | null;
@@ -200,6 +201,7 @@ export interface Product {
   isHit?: boolean | null;
   isNew?: boolean | null;
   image: number | Media;
+  gallery?: (number | Media)[] | null;
   colors?: (number | Color)[] | null;
   updatedAt: string;
   createdAt: string;
@@ -409,6 +411,7 @@ export interface ProductsSelect<T extends boolean = true> {
   brand?: T;
   category?: T;
   price?: T;
+  stock?: T;
   oldPrice?: T;
   rating?: T;
   discount?: T;
@@ -416,6 +419,7 @@ export interface ProductsSelect<T extends boolean = true> {
   isHit?: T;
   isNew?: T;
   image?: T;
+  gallery?: T;
   colors?: T;
   updatedAt?: T;
   createdAt?: T;

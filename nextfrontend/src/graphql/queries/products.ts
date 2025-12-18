@@ -7,7 +7,14 @@ export const GET_PRODUCTS = gql`
         id
         slug
         name
+        model
+        brand {
+          id
+          title
+          slug
+        }
         price
+        stock
         oldPrice
         rating
         description
@@ -20,10 +27,22 @@ export const GET_PRODUCTS = gql`
           height
           alt
         }
+        gallery {
+          url
+          width
+          height
+          alt
+        }
         category {
           id
           slug
           title
+        }
+        colors {
+          id
+          title
+          slug
+          hex
         }
       }
     }

@@ -1,9 +1,6 @@
 'use client'
 
 import { OrderData } from '@/types'
-import { graphqlClient } from '../client'
-import { CREATE_ORDER } from '../queries/createOrder'
-import { CreateOrderResponse } from '../types'
 
 const USE_MOCK = false
 
@@ -36,10 +33,19 @@ export const createOrderRequest = async (orderData: OrderData): Promise<{ succes
     items,
   }
 
-  const response = await graphqlClient.request<{ createOrder?: CreateOrderResponse }>(CREATE_ORDER, {
-    data: payloadBody,
+  const res = await fetch('/api/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payloadBody),
+    cache: 'no-store',
   })
 
-  const id = response.createOrder?.id ?? 'order-created'
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(text || `Order create failed (${res.status})`)
+  }
+
+  const json = await res.json().catch(() => null)
+  const id = json?.id ?? json?.doc?.id ?? 'order-created'
   return { success: true, id }
 }

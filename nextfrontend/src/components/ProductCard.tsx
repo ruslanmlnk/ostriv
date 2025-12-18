@@ -31,6 +31,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
     removeFromWishlist(product.id);
   };
 
+  const productTitle = product.model ? `${product.name} ${product.model}` : product.name;
+
   return (
     <Link
       href={productHref}
@@ -60,7 +62,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
       <div className="w-full h-[303px] flex items-center justify-center p-6 overflow-hidden">
         <UiImage
           src={getImageUrl(product.image)}
-          alt={product.name}
+          alt={productTitle}
           className="max-w-full max-h-full object-contain group-hover/card:scale-105 transition-transform duration-300"
           width={500}
           height={500}
@@ -84,7 +86,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
       {/* Content Area */}
       <div className="flex flex-col items-center w-full px-4 pb-6 text-center pt-4">
         <h3 className="text-xs md:text-sm font-bold text-gray-900 uppercase leading-snug mb-2 min-h-[40px] flex items-center">
-          {product.name}
+          {productTitle}
         </h3>
 
         <div className="flex gap-0.5 mb-3">
