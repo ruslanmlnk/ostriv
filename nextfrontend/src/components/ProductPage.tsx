@@ -31,6 +31,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
 
   useEffect(() => {
     setActiveImageIndex(0);
+    setQuantity(1);
   }, [product.id]);
 
   useEffect(() => {
@@ -44,21 +45,25 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
   }, [product.category, product.id]);
 
   const handleDecrease = () => {
-    if (quantity > 1) setQuantity(quantity - 1);
+    setQuantity((prev) => Math.max(1, prev - 1));
   };
 
   const handleIncrease = () => {
-    setQuantity(quantity + 1);
+    if (!isInStock) return;
+    setQuantity((prev) => (prev < stockCount ? prev + 1 : prev));
   };
 
   const handleAddToCart = () => {
+    if (!isInStock) return;
+    const safeQuantity = Math.max(1, Math.min(quantity, stockCount));
     addToCart({
       id: currentProductId,
       name: product.name,
       model: product.model ?? product.slug ?? String(product.id),
       price: product.price,
-      quantity,
+      quantity: safeQuantity,
       image: getImageUrl(product.image),
+      stock: stockCount,
     });
   };
 
@@ -243,13 +248,16 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
                   <span className="text-[13px] font-bold uppercase text-[#282828] block mb-3">
                     КІЛЬКІСТЬ
                   </span>
-                  <div className="bg-[#F0F0F0] rounded-[3px] p-[3px] flex items-center w-fit gap-[3px]">
-                    <button
-                      onClick={handleDecrease}
-                      className="w-[45px] h-[45px] flex items-center justify-center text-[#8C8C8C] hover:text-[#282828] transition-colors"
-                    >
-                      <Minus size={16} />
-                    </button>
+                <div className="bg-[#F0F0F0] rounded-[3px] p-[3px] flex items-center w-fit gap-[3px]">
+                  <button
+                    type="button"
+                    onClick={handleDecrease}
+                    disabled={!isInStock || quantity <= 1}
+                    className="w-[45px] h-[45px] flex items-center justify-center text-[#8C8C8C] hover:text-[#282828] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#8C8C8C]"
+                    aria-label="Зменшити кількість"
+                  >
+                    <Minus size={16} />
+                  </button>
 
                     <div className="w-[60px] h-[45px] bg-white flex items-center justify-center">
                       <input
@@ -261,8 +269,11 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
                     </div>
 
                     <button
+                      type="button"
                       onClick={handleIncrease}
-                      className="w-[45px] h-[45px] flex items-center justify-center text-[#8C8C8C] hover:text-[#282828] transition-colors"
+                      disabled={!isInStock || quantity >= stockCount}
+                      className="w-[45px] h-[45px] flex items-center justify-center text-[#8C8C8C] hover:text-[#282828] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#8C8C8C]"
+                      aria-label="Збільшити кількість"
                     >
                       <Plus size={16} />
                     </button>
@@ -272,8 +283,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
                 {/* Buy Button */}
                 <div className="mb-6">
                   <button
+                    type="button"
                     onClick={handleAddToCart}
-                    className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-[13px] px-10 py-4 rounded-sm transition-colors shadow-md hover:shadow-lg tracking-wider flex items-center gap-2"
+                    disabled={!isInStock}
+                    className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-[13px] px-10 py-4 rounded-sm transition-colors shadow-md hover:shadow-lg tracking-wider flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-amber-400 disabled:hover:shadow-md"
                   >
                     <ShoppingBasket size={18} />
                     КУПИТИ

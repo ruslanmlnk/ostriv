@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { House, ChevronRight, Truck, User, Wallet } from 'lucide-react';
+import { House, ChevronRight, Truck, User, Wallet, Loader2, Minus, Plus } from 'lucide-react';
 import { useCart } from './CartContext';
 import { useNavigation } from './NavigationContext';
 import { api } from '../api';
@@ -11,7 +11,7 @@ import { novaPoshtaApi } from '../api/np';
 import type { NPCity, NPWarehouse } from '../types';
 
 const CheckoutPage: React.FC = () => {
-  const { items, totalAmount } = useCart();
+  const { items, totalAmount, updateQuantity } = useCart();
   const { navigateTo } = useNavigation();
 
   const [formData, setFormData] = useState({
@@ -156,6 +156,12 @@ const CheckoutPage: React.FC = () => {
       }
 
       if (formData.paymentMethod === 'card') {
+        try {
+          localStorage.setItem('lastCheckoutOrderId', String(response.id));
+        } catch {
+          // ignore
+        }
+
         const checkoutRes = await fetch('/api/liqpay/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -208,6 +214,12 @@ const CheckoutPage: React.FC = () => {
 
       alert('Замовлення успішно оформлено!');
       navigateTo('home');
+
+      try {
+        localStorage.removeItem('lastCheckoutOrderId');
+      } catch {
+        // ignore
+      }
     } catch (error) {
       console.error('Checkout submit error:', error);
       alert(error instanceof Error ? error.message : 'Сталася помилка. Спробуйте ще раз.');
@@ -250,64 +262,101 @@ const CheckoutPage: React.FC = () => {
       <form onSubmit={handleSubmit} className="w-full">
         {/* SECTION 1: ITEMS TABLE */}
         <div className="w-full mb-10">
-          {/* Table Header */}
-          <div className="hidden md:grid grid-cols-12 gap-4 bg-[#2a2a2a] text-white p-4 text-sm font-bold uppercase rounded-t-sm">
-            <div className="col-span-3">Зображення товару</div>
-            <div className="col-span-3">Назва товару</div>
-            <div className="col-span-2">Модель</div>
-            <div className="col-span-2">Кількість</div>
-            <div className="col-span-2">Ціна</div>
+          <div className="w-full border border-[#E5E5E5] border-b-0 bg-[#282828]">
+            {/* Table Header */}
+            <div className="hidden md:grid grid-cols-12 text-white">
+              <div className="col-span-2 py-5 px-6 text-[13px] font-medium uppercase border-r border-[#3E3E3E] flex items-center">
+                Зображення товару
+              </div>
+              <div className="col-span-3 py-5 px-6 text-[13px] font-medium uppercase border-r border-[#3E3E3E] flex items-center">
+                Назва товару
+              </div>
+              <div className="col-span-3 py-5 px-6 text-[13px] font-medium uppercase border-r border-[#3E3E3E] flex items-center">
+                Модель
+              </div>
+              <div className="col-span-2 py-5 px-6 text-[13px] font-medium uppercase border-r border-[#3E3E3E] flex items-center">
+                Кількість
+              </div>
+              <div className="col-span-2 py-5 px-6 text-[13px] font-medium uppercase flex items-center">
+                Ціна
+              </div>
+            </div>
           </div>
 
           {/* Cart Items */}
-          <div className="bg-white border border-gray-200 border-t-0">
+          <div className="bg-white border border-[#E5E5E5] border-t-0">
             {items.map((item) => (
               <div
                 key={item.id}
-                className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-4 border-b border-gray-100 last:border-0 min-h-[100px]"
+                className="grid grid-cols-1 md:grid-cols-12 border-b border-[#E5E5E5] last:border-0 md:h-[175px]"
               >
                 {/* Image */}
-                <div className="col-span-1 md:col-span-3 flex justify-center md:justify-start">
-                  <div className="w-20 h-20 flex items-center justify-center">
+                <div className="col-span-1 md:col-span-2 p-4 flex items-center justify-center md:border-r border-[#E5E5E5] h-full">
+                  <div className="w-[100px] h-[120px] flex items-center justify-center">
                     <UiImage
                       src={item.image}
                       alt={item.name}
                       className="max-h-full max-w-full object-contain"
-                      width={120}
-                      height={120}
+                      width={200}
+                      height={260}
                     />
                   </div>
                 </div>
 
                 {/* Name */}
-                <div className="col-span-1 md:col-span-3">
-                  <span className="md:hidden font-bold mr-2 text-xs uppercase text-gray-500">Назва:</span>
-                  <span className="font-bold text-gray-900 text-sm">{item.name}</span>
+                <div className="col-span-1 md:col-span-3 p-6 flex items-center md:border-r border-[#E5E5E5] h-full">
+                  <div className="flex flex-col md:flex-row md:items-center">
+                    <span className="md:hidden font-bold mr-2 text-xs uppercase text-gray-500">Назва:</span>
+                    <span className="font-bold text-[#282828] text-[15px]">{item.name}</span>
+                  </div>
                 </div>
 
                 {/* Model */}
-                <div className="col-span-1 md:col-span-2">
-                  <span className="md:hidden font-bold mr-2 text-xs uppercase text-gray-500">Модель:</span>
-                  <span className="font-bold text-gray-900 text-sm">{item.model}</span>
+                <div className="col-span-1 md:col-span-3 p-6 flex items-center md:border-r border-[#E5E5E5] h-full">
+                  <div className="flex flex-col md:flex-row md:items-center">
+                    <span className="md:hidden font-bold mr-2 text-xs uppercase text-gray-500">Модель:</span>
+                    <span className="font-medium text-[#282828] text-[15px]">{item.model}</span>
+                  </div>
                 </div>
 
                 {/* Quantity */}
-                <div className="col-span-1 md:col-span-2 flex items-center">
-                  <span className="md:hidden font-bold mr-2 text-xs uppercase text-gray-500">Кількість:</span>
-                  <div className="flex items-center bg-[#EDEDED] rounded-sm">
-                    <span className="w-10 h-10 flex items-center justify-center text-gray-500">-</span>
-                    <span className="w-10 h-10 flex items-center justify-center text-sm font-bold text-gray-900 border-x border-gray-200 bg-white">
-                      {item.quantity}
-                    </span>
-                    <span className="w-10 h-10 flex items-center justify-center text-gray-500">+</span>
+                <div className="col-span-1 md:col-span-2 p-6 flex items-center md:border-r border-[#E5E5E5] h-full">
+                  <div className="flex items-center w-full">
+                    <span className="md:hidden font-bold mr-2 text-xs uppercase text-gray-500">Кількість:</span>
+
+                    <div className="bg-[#F0F0F0] rounded-[3px] p-[3px] flex items-center w-fit gap-[3px]">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.id, -1)}
+                        disabled={item.quantity <= 1}
+                        className="w-[45px] h-[45px] flex items-center justify-center text-[#8C8C8C] hover:text-[#282828] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#8C8C8C]"
+                        aria-label="Зменшити кількість"
+                      >
+                        <Minus size={16} />
+                      </button>
+
+                      <div className="w-[60px] h-[45px] bg-white flex items-center justify-center">
+                        <span className="w-full text-center text-[15px] font-bold text-[#282828]">{item.quantity}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.id, 1)}
+                        disabled={typeof item.stock === 'number' && item.quantity >= item.stock}
+                        className="w-[45px] h-[45px] flex items-center justify-center text-[#8C8C8C] hover:text-[#282828] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-[#8C8C8C]"
+                        aria-label="Збільшити кількість"
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Price */}
-                <div className="col-span-1 md:col-span-2">
+                <div className="col-span-1 md:col-span-2 p-6 flex items-center h-full">
                   <span className="md:hidden font-bold mr-2 text-xs uppercase text-gray-500">Ціна:</span>
-                  <span className="font-bold text-gray-900 text-sm whitespace-nowrap">
-                    ₴{item.price.toLocaleString('uk-UA')}
+                  <span className="font-bold text-[#282828] text-[16px] whitespace-nowrap">
+                    {item.price.toLocaleString('uk-UA')} ₴
                   </span>
                 </div>
               </div>
@@ -315,9 +364,9 @@ const CheckoutPage: React.FC = () => {
           </div>
 
           {/* Total Bar */}
-          <div className="bg-amber-400 text-white font-bold uppercase p-4 pr-8 flex justify-end items-center gap-12 rounded-b-sm">
-            <span className="text-sm">Усього</span>
-            <span className="text-xl text-gray-900">₴{totalAmount.toLocaleString('uk-UA')}</span>
+          <div className="bg-amber-400 text-white font-bold uppercase p-5 pr-8 flex justify-end items-center gap-12">
+            <span className="text-[15px]">Усього</span>
+            <span className="text-[22px]">{totalAmount.toLocaleString('uk-UA')} ₴</span>
           </div>
         </div>
 
@@ -395,7 +444,9 @@ const CheckoutPage: React.FC = () => {
               </div>
 
               <div className="p-6 space-y-4">
-                {/* City input + dropdown */}
+                <p className="text-xs text-gray-500 mb-2">Почніть вводити назву міста та оберіть його зі списку:</p>
+
+                {/* City Input with API Search */}
                 <div className="bg-[#EDEDED] rounded-sm px-2 py-1 relative" ref={dropdownRef}>
                   <input
                     type="text"
@@ -409,33 +460,39 @@ const CheckoutPage: React.FC = () => {
                     autoComplete="off"
                   />
 
-                  {/* Triangle indicator */}
+                  {/* Loading Spinner or Arrow */}
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-amber-500"></div>
+                    {isCitiesLoading ? (
+                      <Loader2 size={16} className="text-amber-500 animate-spin" />
+                    ) : (
+                      <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-amber-500"></div>
+                    )}
                   </div>
 
-                  {showCityDropdown && (
-                    <ul className="absolute z-20 left-0 top-full w-full bg-white border border-gray-200 max-h-60 overflow-y-auto shadow-lg mt-1">
-                      {isCitiesLoading ? (
-                        <li className="px-4 py-2 text-sm text-gray-400">Завантаження...</li>
-                      ) : citiesError ? (
-                        <li className="px-4 py-2 text-sm text-red-600">{citiesError}</li>
-                      ) : cities.length > 0 ? (
-                        cities.map((city) => (
-                          <li
-                            key={city.Ref}
-                            onClick={() => selectCity(city)}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-900"
-                          >
-                            {city.Present}
-                          </li>
-                        ))
-                      ) : (
-                        <li className="px-4 py-2 text-sm text-gray-400">
-                          {cityQuery.trim().length < 2 ? 'Введіть мінімум 2 символи' : 'Нічого не знайдено'}
+                  {showCityDropdown && cities.length > 0 && (
+                    <ul className="absolute z-20 left-0 top-full w-full bg-white border border-gray-200 max-h-60 overflow-y-auto shadow-lg mt-1 rounded-sm">
+                      {cities.map((city) => (
+                        <li
+                          key={city.Ref}
+                          onClick={() => selectCity(city)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-900 border-b border-gray-50 last:border-0"
+                        >
+                          {city.Present}
                         </li>
-                      )}
+                      ))}
                     </ul>
+                  )}
+
+                  {showCityDropdown && citiesError && (
+                    <div className="absolute z-20 left-0 top-full w-full bg-white border border-gray-200 p-2 shadow-lg mt-1 rounded-sm text-xs text-red-600">
+                      {citiesError}
+                    </div>
+                  )}
+
+                  {showCityDropdown && !isCitiesLoading && !citiesError && formData.city.trim().length >= 2 && cities.length === 0 && (
+                    <div className="absolute z-20 left-0 top-full w-full bg-white border border-gray-200 p-2 shadow-lg mt-1 rounded-sm text-xs text-gray-500">
+                      Місто не знайдено
+                    </div>
                   )}
                 </div>
 
@@ -454,12 +511,16 @@ const CheckoutPage: React.FC = () => {
                     name="warehouse"
                     value={formData.warehouse}
                     onChange={handleInputChange}
-                    className="w-full bg-transparent border-none text-sm p-2 focus:outline-none text-gray-900 appearance-none"
+                    className="w-full bg-transparent border-none text-sm p-2 focus:outline-none text-gray-900 appearance-none disabled:text-gray-400"
                     disabled={!selectedCity || isWhLoading}
                     required
                   >
                     <option value="" className="text-gray-500">
-                      {isWhLoading ? 'Завантаження відділень...' : warehousesError || 'Виберіть відділення'}
+                      {isWhLoading
+                        ? 'Завантаження відділень...'
+                        : !selectedCity
+                          ? 'Спочатку оберіть місто'
+                          : warehousesError || 'Оберіть відділення'}
                     </option>
 
                     {warehouses.map((wh) => (
@@ -469,9 +530,13 @@ const CheckoutPage: React.FC = () => {
                     ))}
                   </select>
 
-                  {/* Triangle indicator */}
+                  {/* Icons */}
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-amber-500"></div>
+                    {isWhLoading ? (
+                      <Loader2 size={16} className="text-amber-500 animate-spin" />
+                    ) : (
+                      <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[6px] border-t-amber-500"></div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -508,7 +573,7 @@ const CheckoutPage: React.FC = () => {
                     onChange={handleInputChange}
                     className="text-amber-400 focus:ring-amber-400 w-4 h-4"
                   />
-                  <span className="text-sm text-gray-900">Онлайн-оплата карткою (LiqPay)</span>
+                  <span className="text-sm text-gray-900">Онлайн–платежі Visa i MasterCard (LiqPay)</span>
                 </label>
               </div>
             </div>
@@ -520,7 +585,7 @@ const CheckoutPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigateTo('cart')}
-            className="bg-[#8C8C8C] hover:bg-[#777] text-white font-bold uppercase text-xs px-8 py-4 rounded-sm transition-colors w-full md:w-auto"
+            className="bg-[#8C8C8C] hover:bg-[#777] text-white font-bold uppercase text-[13px] px-10 py-4 rounded-sm transition-colors w-full md:w-auto tracking-wider"
           >
             ПРОДОВЖИТИ ПОКУПКИ
           </button>
@@ -528,7 +593,7 @@ const CheckoutPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-xs px-8 py-4 rounded-sm shadow-md hover:shadow-lg transition-colors w-full md:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
+            className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-[13px] px-10 py-4 rounded-sm shadow-md hover:shadow-lg transition-colors w-full md:w-auto tracking-wider disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isSubmitting ? 'Обробка…' : 'ОФОРМИТИ ЗАМОВЛЕННЯ'}
           </button>

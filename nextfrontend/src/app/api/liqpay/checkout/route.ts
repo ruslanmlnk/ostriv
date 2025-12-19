@@ -9,6 +9,15 @@ type CheckoutBody = {
 };
 
 const LIQPAY_CHECKOUT_URL = 'https://www.liqpay.ua/api/3/checkout';
+const PAYLOAD_URL =
+  process.env.NEXT_PUBLIC_PAYLOAD_URL ??
+  process.env.NEXT_PUBLIC_CMS_URL ??
+  process.env.PAYLOAD_URL ??
+  'http://localhost:3000';
+
+function normalizeBaseUrl(value: string) {
+  return value.replace(/\/+$/, '');
+}
 
 function toBase64(value: string) {
   return Buffer.from(value, 'utf8').toString('base64');
@@ -52,6 +61,7 @@ export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin') || request.nextUrl.origin;
   const orderIdStr = String(orderId);
   const currency = (body.currency || process.env.LIQPAY_CURRENCY || 'UAH').toUpperCase();
+  const serverBaseUrl = normalizeBaseUrl(process.env.LIQPAY_SERVER_URL || PAYLOAD_URL);
 
   const payload: Record<string, unknown> = {
     public_key: publicKey,
@@ -62,7 +72,7 @@ export async function POST(request: NextRequest) {
     description: body.description || `Оплата замовлення #${orderIdStr}`,
     order_id: orderIdStr,
     result_url: `${origin}/checkout/return?orderId=${encodeURIComponent(orderIdStr)}`,
-    server_url: `${origin}/api/liqpay/callback`,
+    server_url: `${serverBaseUrl}/api/liqpay/callback`,
     language: 'uk',
   };
 

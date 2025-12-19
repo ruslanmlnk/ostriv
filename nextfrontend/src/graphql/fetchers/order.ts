@@ -14,8 +14,7 @@ export const createOrderRequest = async (orderData: OrderData): Promise<{ succes
     const numericId = Number(productId)
 
     return {
-      product: Number.isFinite(numericId) ? numericId : undefined,
-      productId,
+      product: Number.isFinite(numericId) ? numericId : productId,
       quantity: item.quantity,
     }
   })

@@ -22,7 +22,7 @@ export const Orders: CollectionConfig = {
   slug: 'orders',
   admin: {
     useAsTitle: 'id',
-    defaultColumns: ['status', 'total', 'createdAt'],
+    defaultColumns: ['status', 'paymentStatus', 'total', 'createdAt'],
   },
   access: {
     read: ({ req }) => {
@@ -44,6 +44,39 @@ export const Orders: CollectionConfig = {
       return false
     },
     create: () => true,
+  },
+  hooks: {
+    beforeChange: [
+      ({ data, operation, originalDoc }) => {
+        if (!data) return data
+
+        const nextData: Record<string, unknown> = { ...data }
+        const paymentMethod = typeof nextData.paymentMethod === 'string' ? nextData.paymentMethod : undefined
+        const paymentStatus = typeof nextData.paymentStatus === 'string' ? nextData.paymentStatus : undefined
+
+        if (operation === 'create') {
+          if (!nextData.paymentProvider && paymentMethod === 'card') {
+            nextData.paymentProvider = 'liqpay'
+          }
+
+          if (paymentMethod === 'card' && (!paymentStatus || paymentStatus === 'unpaid')) {
+            nextData.paymentStatus = 'pending'
+          } else if (!paymentStatus) {
+            nextData.paymentStatus = 'unpaid'
+          }
+        }
+
+        if (nextData.paymentStatus === 'paid' && !nextData.paidAt && !(originalDoc as any)?.paidAt) {
+          nextData.paidAt = new Date().toISOString()
+        }
+
+        if (nextData.paymentStatus === 'paid' && nextData.status !== 'paid') {
+          nextData.status = 'paid'
+        }
+
+        return nextData
+      },
+    ],
   },
   fields: [
     {
@@ -99,6 +132,92 @@ export const Orders: CollectionConfig = {
       required: true,
     },
     {
+      name: 'paymentStatus',
+      type: 'select',
+      label: 'Статус оплати',
+      defaultValue: 'unpaid',
+      options: [
+        { label: 'Не оплачено', value: 'unpaid' },
+        { label: 'Очікується оплата', value: 'pending' },
+        { label: 'Оплачено', value: 'paid' },
+        { label: 'Помилка / Відхилено', value: 'failed' },
+        { label: 'Повернено', value: 'refunded' },
+      ],
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'paymentProvider',
+      type: 'select',
+      label: 'Платіжний провайдер',
+      options: [{ label: 'LiqPay', value: 'liqpay' }],
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'paidAt',
+      type: 'date',
+      label: 'Дата оплати',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'liqpay',
+      type: 'group',
+      label: 'LiqPay',
+      admin: {
+        readOnly: true,
+        condition: (_, siblingData) =>
+          siblingData?.paymentProvider === 'liqpay' || siblingData?.paymentMethod === 'card',
+      },
+      fields: [
+        {
+          name: 'status',
+          type: 'text',
+          label: 'Статус LiqPay',
+        },
+        {
+          name: 'action',
+          type: 'text',
+          label: 'Action',
+        },
+        {
+          name: 'paymentId',
+          type: 'text',
+          label: 'Payment ID',
+        },
+        {
+          name: 'transactionId',
+          type: 'text',
+          label: 'Transaction ID',
+        },
+        {
+          name: 'errCode',
+          type: 'text',
+          label: 'Error code',
+        },
+        {
+          name: 'errDescription',
+          type: 'text',
+          label: 'Error description',
+        },
+        {
+          name: 'lastCallbackAt',
+          type: 'date',
+          label: 'Останній callback',
+        },
+        {
+          name: 'raw',
+          type: 'json',
+          label: 'Raw payload',
+        },
+      ],
+    },
+    {
       name: 'items',
       type: 'array',
       required: true,
@@ -107,11 +226,6 @@ export const Orders: CollectionConfig = {
           name: 'product',
           type: 'relationship',
           relationTo: 'products',
-          required: false,
-        },
-        {
-          name: 'productId',
-          type: 'text',
           required: true,
         },
         {

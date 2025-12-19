@@ -244,9 +244,29 @@ export interface Order {
   warehouse: string;
   deliveryMethod?: string | null;
   paymentMethod: string;
+  paymentStatus?: ('unpaid' | 'pending' | 'paid' | 'failed' | 'refunded') | null;
+  paymentProvider?: 'liqpay' | null;
+  paidAt?: string | null;
+  liqpay?: {
+    status?: string | null;
+    action?: string | null;
+    paymentId?: string | null;
+    transactionId?: string | null;
+    errCode?: string | null;
+    errDescription?: string | null;
+    lastCallbackAt?: string | null;
+    raw?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+  };
   items: {
-    product?: (number | null) | Product;
-    productId: string;
+    product: number | Product;
     quantity: number;
     id?: string | null;
   }[];
@@ -438,11 +458,25 @@ export interface OrdersSelect<T extends boolean = true> {
   warehouse?: T;
   deliveryMethod?: T;
   paymentMethod?: T;
+  paymentStatus?: T;
+  paymentProvider?: T;
+  paidAt?: T;
+  liqpay?:
+    | T
+    | {
+        status?: T;
+        action?: T;
+        paymentId?: T;
+        transactionId?: T;
+        errCode?: T;
+        errDescription?: T;
+        lastCallbackAt?: T;
+        raw?: T;
+      };
   items?:
     | T
     | {
         product?: T;
-        productId?: T;
         quantity?: T;
         id?: T;
       };

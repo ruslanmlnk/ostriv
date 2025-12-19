@@ -59,6 +59,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   image: string;
+  stock?: number;
 }
 
 export interface OrderData {
