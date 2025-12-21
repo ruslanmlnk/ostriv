@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { api } from '@/api';
 import { Category } from '@/types';
-import { useNavigation } from './NavigationContext';
 import logo from '../../public/logo_footer.svg'
 
 import location from '../../public/img/location.svg'
@@ -19,7 +19,6 @@ import Image from 'next/image';
 
 
 const Footer: React.FC = () => {
-  const { navigateTo } = useNavigation();
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
@@ -43,9 +42,9 @@ const Footer: React.FC = () => {
       <div className="w-full max-w-[1352px] mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 my-[100px]">
           <div className="lg:col-span-3 flex flex-col gap-8">
-            <button onClick={() => navigateTo('home')} className="inline-block focus:outline-none w-fit">
+            <Link href="/" className="inline-block focus:outline-none w-fit">
               <Image src={logo} alt="Острів Лого" className="h-[40px] w-auto" />
-            </button>
+            </Link>
             <div className="flex flex-col gap-2">
               <h5 className="text-white font-medium text-[16px] uppercase leading-none mb-2">ГРАФІК РОБОТИ</h5>
               <p className="text-[16px] leading-[1.3] text-[#878787]">
@@ -60,28 +59,19 @@ const Footer: React.FC = () => {
             <h5 className="text-white font-medium text-[16px] uppercase leading-none mb-6">ОСНОВНЕ</h5>
             <ul className="space-y-[11px] text-[16px]">
               <li>
-                <button
-                  onClick={() => navigateTo('home')}
-                  className="hover:text-white transition-colors leading-none block text-left"
-                >
+                <Link href="/" className="hover:text-white transition-colors leading-none block text-left">
                   Головна сторінка
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('delivery')}
-                  className="hover:text-white transition-colors leading-none block text-left"
-                >
+                <Link href="/delivery" className="hover:text-white transition-colors leading-none block text-left">
                   Умови оплати та доставки
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  onClick={() => navigateTo('about')}
-                  className="hover:text-white transition-colors leading-none block text-left"
-                >
+                <Link href="/about" className="hover:text-white transition-colors leading-none block text-left">
                   Про компанію
-                </button>
+                </Link>
               </li>
             </ul>
           </div>
@@ -93,24 +83,24 @@ const Footer: React.FC = () => {
                 {leftCats.length === 0 && <li className="text-[#666]">Категорії завантажуються…</li>}
                 {leftCats.map((cat) => (
                   <li key={cat.slug || cat.id}>
-                    <button
-                      onClick={() => navigateTo('catalog', cat.slug)}
+                    <Link
+                      href={cat.slug ? `/catalog?category=${encodeURIComponent(cat.slug)}` : '/catalog'}
                       className="hover:text-white transition-colors leading-none block text-left"
                     >
                       {cat.title}
-                    </button>
+                    </Link>
                   </li>
                 ))}
               </ul>
               <ul className="space-y-[11px]">
                 {rightCats.map((cat) => (
                   <li key={cat.slug || cat.id}>
-                    <button
-                      onClick={() => navigateTo('catalog', cat.slug)}
+                    <Link
+                      href={cat.slug ? `/catalog?category=${encodeURIComponent(cat.slug)}` : '/catalog'}
                       className="hover:text-white transition-colors leading-none block text-left"
                     >
                       {cat.title}
-                    </button>
+                    </Link>
                   </li>
                 ))}
               </ul>

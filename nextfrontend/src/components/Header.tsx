@@ -1,12 +1,35 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Heart, ShoppingBasket, Menu, ChevronRight } from 'lucide-react';
 import { useCart } from './CartContext';
 import { useCategories } from './useCategories';
 import { useWishlist } from './WishlistContext';
-import { Category } from '@/types';
+import { api } from '../api';
+import { Category, Product } from '@/types';
+
+let cachedSearchProducts: Product[] | null = null;
+let searchProductsPromise: Promise<Product[]> | null = null;
+
+const loadSearchProducts = async (): Promise<Product[]> => {
+  if (cachedSearchProducts) return cachedSearchProducts;
+
+  if (!searchProductsPromise) {
+    searchProductsPromise = api
+      .getProducts('all')
+      .then((products) => {
+        cachedSearchProducts = products;
+        return products;
+      })
+      .finally(() => {
+        searchProductsPromise = null;
+      });
+  }
+
+  return searchProductsPromise!;
+};
 
 interface HeaderProps {
   initialCategories?: Category[];
@@ -16,9 +39,16 @@ const Header: React.FC<HeaderProps> = ({ initialCategories }) => {
   const { totalCount, totalAmount } = useCart();
   const { count: wishlistCount } = useWishlist();
   const { categories } = useCategories(initialCategories);
+  const router = useRouter();
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [isSuggestionsOpen, setIsSuggestionsOpen] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -30,10 +60,87 @@ const Header: React.FC<HeaderProps> = ({ initialCategories }) => {
       ) {
         setIsCategoriesOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSuggestionsOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const term = searchValue.trim();
+
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = null;
+    }
+
+    if (!term) {
+      setSuggestions([]);
+      setIsSuggestionsOpen(false);
+      setIsLoadingSuggestions(false);
+      return;
+    }
+
+    setIsSuggestionsOpen(true);
+    setIsLoadingSuggestions(!cachedSearchProducts);
+    setSuggestions([]);
+
+    let isCancelled = false;
+
+    searchDebounceRef.current = setTimeout(() => {
+      loadSearchProducts()
+        .then((products) => {
+          if (isCancelled) return;
+          const normalized = term.toLowerCase();
+          const next = products
+            .filter((product) =>
+              [product.name, product.model ?? '', product.brand ?? '']
+                .join(' ')
+                .toLowerCase()
+                .includes(normalized),
+            )
+            .slice(0, 8);
+
+          setSuggestions(next);
+        })
+        .catch(() => {
+          if (!isCancelled) setSuggestions([]);
+        })
+        .finally(() => {
+          if (!isCancelled) setIsLoadingSuggestions(false);
+        });
+    }, 200);
+
+    return () => {
+      isCancelled = true;
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = null;
+      }
+    };
+  }, [searchValue]);
+
+  const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const term = searchValue.trim();
+    if (!term) return;
+
+    router.push(`/catalog?search=${encodeURIComponent(term)}`);
+    setIsSuggestionsOpen(false);
+    setSuggestions([]);
+  };
+
+  const handleSuggestionClick = (product: Product) => {
+    const term = (product.name || '').trim();
+    if (!term) return;
+
+    setSearchValue(term);
+    router.push(`/catalog?search=${encodeURIComponent(term)}`);
+    setIsSuggestionsOpen(false);
+    setSuggestions([]);
+  };
 
   return (
     <header className="w-full flex flex-col font-sans z-50 relative">
@@ -81,17 +188,54 @@ const Header: React.FC<HeaderProps> = ({ initialCategories }) => {
           </Link>
 
           {/* Search Bar */}
-          <div className="flex-1 w-full max-w-3xl mx-4 lg:mx-12">
-            <div className="relative flex items-center h-12">
+          <div className="flex-1 w-full max-w-3xl mx-4 lg:mx-12" ref={searchRef}>
+            <form className="relative flex items-center h-12" onSubmit={handleSearchSubmit}>
               <input
                 type="text"
-                placeholder="Пошук по сайту..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                onFocus={() => {
+                  if (searchValue.trim()) setIsSuggestionsOpen(true);
+                }}
+                placeholder="Пошук товарів..."
+                autoComplete="off"
                 className="w-full h-full border-2 border-[#E5E5E5] bg-transparent rounded-sm pl-5 pr-14 focus:outline-none focus:border-amber-400 text-gray-600 placeholder-gray-400 text-sm"
               />
-              <button className="absolute right-0 top-0 bottom-0 w-14 bg-amber-400 hover:bg-amber-500 text-white flex items-center justify-center rounded-r-sm transition-colors">
+              <button
+                type="submit"
+                className="absolute right-0 top-0 bottom-0 w-14 bg-amber-400 hover:bg-amber-500 text-white flex items-center justify-center rounded-r-sm transition-colors"
+              >
                 <Search size={20} />
               </button>
-            </div>
+
+              {isSuggestionsOpen && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 shadow-lg rounded-b-sm z-50">
+                  {isLoadingSuggestions ? (
+                    <div className="px-4 py-3 text-sm text-gray-500">Пошук...</div>
+                  ) : suggestions.length > 0 ? (
+                    <ul className="max-h-64 overflow-y-auto divide-y divide-gray-100">
+                      {suggestions.map((item) => (
+                        <li key={item.id}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleSuggestionClick(item)}
+                            className="w-full px-4 py-3 flex items-center justify-between text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <span className="truncate">{item.name}</span>
+                            <span className="text-xs text-gray-500 ml-3 whitespace-nowrap">
+                              {item.price.toLocaleString('uk-UA')} ₴
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-500">Нічого не знайдено</div>
+                  )}
+                </div>
+              )}
+            </form>
           </div>
 
           {/* Icons / Cart */}
@@ -183,9 +327,9 @@ const Header: React.FC<HeaderProps> = ({ initialCategories }) => {
                 </Link>
               </li>
               <li>
-                <button className="block py-4 px-8 text-[12px] font-bold hover:text-amber-400 transition-colors uppercase tracking-wider">
+                <Link href="/contact" className="block py-4 px-8 text-[12px] font-bold hover:text-amber-400 transition-colors uppercase tracking-wider">
                     Контакти
-                </button>
+                </Link>
               </li>
             </ul>
           </nav>

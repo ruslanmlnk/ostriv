@@ -3,7 +3,16 @@
 import { usePathname, useRouter } from 'next/navigation';
 import React, { ReactNode } from 'react';
 
-export type Page = 'home' | 'catalog' | 'product' | 'cart' | 'checkout' | 'about' | 'delivery' | 'wishlist';
+export type Page =
+  | 'home'
+  | 'catalog'
+  | 'product'
+  | 'cart'
+  | 'checkout'
+  | 'about'
+  | 'delivery'
+  | 'wishlist'
+  | 'contact';
 
 const pageToPath: Record<Page, string> = {
   home: '/',
@@ -14,6 +23,7 @@ const pageToPath: Record<Page, string> = {
   about: '/about',
   delivery: '/delivery',
   wishlist: '/wishlist',
+  contact: '/contact',
 };
 
 const pathToPage = (pathname: string): Page => {
@@ -24,6 +34,7 @@ const pathToPage = (pathname: string): Page => {
   if (pathname.startsWith('/about')) return 'about';
   if (pathname.startsWith('/delivery')) return 'delivery';
   if (pathname.startsWith('/wishlist')) return 'wishlist';
+  if (pathname.startsWith('/contact')) return 'contact';
   return 'home';
 };
 

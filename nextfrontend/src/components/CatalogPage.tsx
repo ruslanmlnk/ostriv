@@ -10,13 +10,23 @@ import { House, ChevronRight, ChevronDown } from 'lucide-react';
 import { useNavigation } from './NavigationContext';
 import { useCategories } from './useCategories';
 
+const normalizeKey = (value?: string) => (value || '').trim().toLowerCase();
+const getBrandKey = (value?: string) => normalizeKey(value);
+const getColorKey = (slug?: string, title?: string) => normalizeKey(slug || title);
+
 interface CatalogPageProps {
   categorySlug?: string;
+  searchQuery?: string;
   initialProducts?: Product[];
   initialCategories?: any[];
 }
 
-const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts, initialCategories }) => {
+const CatalogPage: React.FC<CatalogPageProps> = ({
+  categorySlug,
+  searchQuery,
+  initialProducts,
+  initialCategories,
+}) => {
   const { navigateTo } = useNavigation();
   const router = useRouter();
   const pathname = usePathname();
@@ -25,7 +35,11 @@ const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts
   const [loading, setLoading] = useState(!initialProducts || initialProducts.length === 0);
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(categorySlug);
   const [sort, setSort] = useState<'default' | 'price-asc' | 'price-desc'>('default');
+  const [searchTerm, setSearchTerm] = useState<string>(searchQuery || '');
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const { categories } = useCategories(initialCategories);
+  const activeSearchTerm = searchTerm.trim();
 
   useEffect(() => {
     if (initialProducts && initialProducts.length > 0) {
@@ -39,6 +53,10 @@ const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts
   }, [categorySlug]);
 
   useEffect(() => {
+    setSearchTerm(searchQuery || '');
+  }, [searchQuery]);
+
+  useEffect(() => {
     if (initialProducts && initialProducts.length > 0) return;
     const loadProducts = async () => {
       setLoading(true);
@@ -49,10 +67,41 @@ const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts
     loadProducts();
   }, [initialProducts]);
 
+  const brandSet = useMemo(() => new Set(selectedBrands), [selectedBrands]);
+  const colorSet = useMemo(() => new Set(selectedColors), [selectedColors]);
+
   const filteredProducts = useMemo(() => {
-    if (!selectedCategory) return allProducts;
-    return allProducts.filter((p) => p.category === selectedCategory);
-  }, [allProducts, selectedCategory]);
+    const normalizedSearch = activeSearchTerm.toLowerCase();
+    let products = selectedCategory
+      ? allProducts.filter((p) => p.category === selectedCategory)
+      : allProducts;
+
+    if (activeSearchTerm) {
+      products = products.filter((p) => {
+        const haystack = [p.name, p.model ?? '', p.brand ?? '', p.description ?? '']
+          .join(' ')
+          .toLowerCase();
+
+        return haystack.includes(normalizedSearch);
+      });
+    }
+
+    if (brandSet.size > 0) {
+      products = products.filter((p) => {
+        const key = getBrandKey(p.brand);
+        return key && brandSet.has(key);
+      });
+    }
+
+    if (colorSet.size > 0) {
+      products = products.filter((p) => {
+        if (!Array.isArray(p.colors)) return false;
+        return p.colors.some((c) => colorSet.has(getColorKey(c.slug, c.title)));
+      });
+    }
+
+    return products;
+  }, [activeSearchTerm, allProducts, brandSet, colorSet, selectedCategory]);
 
   const sortedProducts = useMemo(() => {
     const items = [...filteredProducts];
@@ -72,10 +121,58 @@ const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts
     return counts;
   }, [allProducts]);
 
+  const brandCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    allProducts.forEach((p) => {
+      const key = getBrandKey(p.brand);
+      if (!key) return;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [allProducts]);
+
+  const colorCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    allProducts.forEach((p) => {
+      if (!Array.isArray(p.colors)) return;
+      p.colors.forEach((c) => {
+        if (!c) return;
+        const key = getColorKey(c.slug, c.title);
+        if (!key) return;
+        counts[key] = (counts[key] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [allProducts]);
+
+  const toggleBrand = (opt: { slug?: string; label: string }) => {
+    const key = getBrandKey(opt.slug || opt.label);
+    if (!key) return;
+    setSelectedBrands((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key],
+    );
+  };
+
+  const toggleColor = (opt: { slug?: string; label: string }) => {
+    const key = getColorKey(opt.slug, opt.label);
+    if (!key) return;
+    setSelectedColors((prev) =>
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key],
+    );
+  };
+
   const handleSelectCategory = (slug?: string) => {
     setSelectedCategory(slug);
-    const query = slug ? `?category=${slug}` : '';
-    router.replace(`${pathname}${query}`, { scroll: false });
+    const params = new URLSearchParams();
+    if (slug) params.set('category', slug);
+
+    if (activeSearchTerm) {
+      params.set('search', activeSearchTerm);
+    }
+
+    const query = params.toString();
+    const nextPath = query ? `${pathname}?${query}` : pathname;
+    router.replace(nextPath, { scroll: false });
   };
 
   const currentCategoryTitle = useMemo(() => {
@@ -83,6 +180,10 @@ const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts
     const found = categories.find((c) => c.slug === selectedCategory);
     return found?.title || 'Каталог';
   }, [categories, selectedCategory]);
+
+  const emptyMessage = activeSearchTerm
+    ? `Немає результатів за запитом "${activeSearchTerm}".`
+    : 'Товарів не знайдено';
 
   return (
     <div className="w-full max-w-[1352px] mx-auto px-4 py-6">
@@ -112,6 +213,12 @@ const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts
           <SidebarFilters
             selectedSlug={selectedCategory}
             categoryCounts={categoryCounts}
+            brandCounts={brandCounts}
+            colorCounts={colorCounts}
+            selectedBrands={selectedBrands}
+            selectedColors={selectedColors}
+            onToggleBrand={toggleBrand}
+            onToggleColor={toggleColor}
             onSelectCategory={handleSelectCategory}
           />
         </aside>
@@ -120,29 +227,33 @@ const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts
         <main className="flex-1">
           {/* Header & Sort */}
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">{currentCategoryTitle}</h1>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{currentCategoryTitle}</h1>
+              {activeSearchTerm && (
+                <p className="text-sm text-gray-500 mt-1">Результати за запитом "{activeSearchTerm}"</p>
+              )}
+            </div>
 
-           <div className="flex items-center gap-2">
-  <span className="text-xs font-bold text-gray-800">Сортування:</span>
-  <div className="relative inline-flex items-center border border-gray-200 rounded-sm bg-white px-3 py-1.5 min-w-[200px]">
-    <select
-      className="appearance-none bg-transparent text-xs text-gray-700 focus:outline-none w-full pr-6 cursor-pointer"
-      value={sort}
-      onChange={(e) =>
-        setSort(e.target.value as 'default' | 'price-asc' | 'price-desc')
-      }
-    >
-      <option value="default">За замовчуванням</option>
-      <option value="price-asc">За ціною (зростання)</option>
-      <option value="price-desc">За ціною (спадання)</option>
-    </select>
-    <ChevronDown
-      size={14}
-      className="pointer-events-none absolute right-3 text-gray-400"
-    />
-  </div>
-</div>
-
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-gray-800">Сортування:</span>
+              <div className="relative inline-flex items-center border border-gray-200 rounded-sm bg-white px-3 py-1.5 min-w-[200px]">
+                <select
+                  className="appearance-none bg-transparent text-xs text-gray-700 focus:outline-none w-full pr-6 cursor-pointer"
+                  value={sort}
+                  onChange={(e) =>
+                    setSort(e.target.value as 'default' | 'price-asc' | 'price-desc')
+                  }
+                >
+                  <option value="default">За замовчуванням</option>
+                  <option value="price-asc">За ціною (зростання)</option>
+                  <option value="price-desc">За ціною (спадання)</option>
+                </select>
+                <ChevronDown
+                  size={14}
+                  className="pointer-events-none absolute right-3 text-gray-400"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Grid */}
@@ -151,7 +262,7 @@ const CatalogPage: React.FC<CatalogPageProps> = ({ categorySlug, initialProducts
               sortedProducts.map((product) => <ProductCard key={product.id} product={product} />)
             ) : (
               <div className="col-span-3 py-10 text-center text-gray-500">
-                {loading ? 'Завантаження...' : 'Товарів не знайдено'}
+                {loading ? 'Завантаження...' : emptyMessage}
               </div>
             )}
           </div>

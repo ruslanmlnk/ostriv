@@ -119,13 +119,25 @@ const FilterGroup: React.FC<FilterGroupProps> = ({
 interface SidebarFiltersProps {
   selectedSlug?: string;
   categoryCounts?: Record<string, number>;
+  brandCounts?: Record<string, number>;
+  colorCounts?: Record<string, number>;
+  selectedBrands?: string[];
+  selectedColors?: string[];
   onSelectCategory?: (slug?: string) => void;
+  onToggleBrand?: (option: FilterOption) => void;
+  onToggleColor?: (option: FilterOption) => void;
 }
 
 const SidebarFilters: React.FC<SidebarFiltersProps> = ({
   selectedSlug,
   categoryCounts,
+  brandCounts,
+  colorCounts,
+  selectedBrands,
+  selectedColors,
   onSelectCategory,
+  onToggleBrand,
+  onToggleColor,
 }) => {
   const { categories } = useCategories();
   const { navigateTo } = useNavigation();
@@ -142,13 +154,15 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
   const brandOptions: FilterOption[] = brands.map((brand) => ({
     label: brand.title,
     slug: brand.slug,
-    count: 0,
+    count: brandCounts?.[(brand.slug || brand.title || '').trim().toLowerCase()] ?? 0,
+    checked: selectedBrands?.includes((brand.slug || brand.title || '').trim().toLowerCase()),
   }));
 
   const colorOptions: FilterOption[] = colors.map((color) => ({
     label: color.title,
     slug: color.slug,
-    count: 0,
+    count: colorCounts?.[(color.slug || color.title || '').trim().toLowerCase()] ?? 0,
+    checked: selectedColors?.includes((color.slug || color.title || '').trim().toLowerCase()),
   }));
 
   const handleCategoryChange = (opt: FilterOption) => {
@@ -158,6 +172,14 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
     } else {
       navigateTo('catalog', nextSlug);
     }
+  };
+
+  const handleBrandChange = (opt: FilterOption) => {
+    onToggleBrand?.(opt);
+  };
+
+  const handleColorChange = (opt: FilterOption) => {
+    onToggleColor?.(opt);
   };
 
   return (
@@ -181,13 +203,12 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
       />
 
       {/* Manufacturer */}
-      <FilterGroup title="Бренд" options={brandOptions} />
+      <FilterGroup title="Бренд" options={brandOptions} onChange={handleBrandChange} />
 
       {/* Color */}
-      <FilterGroup title="Колір" options={colorOptions} />
+      <FilterGroup title="Колір" options={colorOptions} onChange={handleColorChange} />
     </div>
   );
 };
 
 export default SidebarFilters;
-
