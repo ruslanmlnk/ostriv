@@ -1,13 +1,14 @@
 'use client';
 
+import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { House, ChevronRight, Heart, Star, Minus, Plus, ShoppingBasket, Check, X } from 'lucide-react';
 import SidebarCategories from './SidebarCategories';
 import SidebarWidgets from './SidebarWidgets';
 import ProductCard from './ProductCard';
-import { useNavigation } from './NavigationContext';
 import { useCart } from './CartContext';
 import { useWishlist } from './WishlistContext';
+import { useCategories } from './useCategories';
 import { Product } from '../types';
 import { api, getImageUrl } from '../api';
 
@@ -23,7 +24,6 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
     const first = Array.isArray(product.colors) && product.colors.length > 0 ? product.colors[0] : null;
     return first ? (first.slug || first.title || undefined) : undefined;
   });
-  const { navigateTo } = useNavigation();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
@@ -32,6 +32,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
   const productTitle = product.model ? `${product.name} ${product.model}` : product.name;
   const stockCount = typeof product.stock === 'number' ? product.stock : 0;
   const isInStock = stockCount > 0;
+  const { categories } = useCategories();
+  const categoryTitle = categories.find((c) => c.slug === product.category)?.title || product.category;
 
   useEffect(() => {
     setActiveImageIndex(0);
@@ -99,24 +101,27 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
     <div className="w-full max-w-[1352px] mx-auto px-4 py-6">
       {/* Breadcrumbs */}
       <nav className="flex flex-wrap items-center gap-2 text-xs text-amber-400 mb-8">
-        <button onClick={() => navigateTo('home')}>
+        <Link href="/" aria-label="На головну">
           <House
             size={16}
             className="fill-gray-400 text-gray-400 hover:text-amber-500 hover:fill-amber-500 transition-colors"
           />
-        </button>
+        </Link>
         <ChevronRight size={14} className="text-gray-300" />
-        <button onClick={() => navigateTo('catalog')} className="text-amber-500 font-medium hover:underline">
+        <Link href="/catalog" className="text-amber-500 font-medium hover:underline">
           Каталог
-        </button>
-        <ChevronRight size={14} className="text-gray-300" />
-        <button onClick={() => navigateTo('catalog')} className="text-amber-500 font-medium hover:underline">
-          Побутова техніка
-        </button>
-        <ChevronRight size={14} className="text-gray-300" />
-        <button onClick={() => navigateTo('catalog')} className="text-amber-500 font-medium hover:underline">
-          Холодильник
-        </button>
+        </Link>
+        {product.category && (
+          <>
+            <ChevronRight size={14} className="text-gray-300" />
+            <Link
+              href={`/catalog?category=${encodeURIComponent(product.category)}`}
+              className="text-amber-500 font-medium hover:underline"
+            >
+              {categoryTitle || 'Категорія'}
+            </Link>
+          </>
+        )}
         <ChevronRight size={14} className="text-gray-300" />
         <span className="text-amber-500 font-medium">{productTitle}</span>
       </nav>
