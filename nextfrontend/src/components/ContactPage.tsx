@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   House,
   ChevronRight,
@@ -18,9 +18,54 @@ import { useNavigation } from './NavigationContext';
 const ContactPage: React.FC = () => {
   const { navigateTo } = useNavigation();
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: '',
+  });
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Дякуємо! Ваше повідомлення надіслано. Ми зв'яжемося з вами найближчим часом.");
+    const phone = formData.phone.trim();
+    if (!phone) {
+      setStatus('error');
+      setToast({ message: 'Телефон є обов’язковим.', type: 'error' });
+      return;
+    }
+
+    setStatus('loading');
+    try {
+      const res = await fetch('/api/contact-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name.trim() || undefined,
+          email: formData.email.trim() || undefined,
+          phone,
+          subject: formData.subject.trim() || undefined,
+          message: formData.message.trim() || undefined,
+          source: 'contact-page',
+        }),
+      });
+
+      if (!res.ok) throw new Error('Submit failed');
+      setStatus('success');
+      setToast({ message: 'Повідомлення надіслано! Ми зв’яжемося з вами.', type: 'success' });
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+      });
+    } catch {
+      setStatus('error');
+      setToast({ message: 'Не вдалося надіслати. Перевірте номер і спробуйте ще раз.', type: 'error' });
+    }
   };
 
   return (
@@ -121,7 +166,8 @@ const ContactPage: React.FC = () => {
                 <label className="text-[11px] font-bold uppercase text-gray-400 ml-1">Ваше ім&apos;я</label>
                 <input
                   type="text"
-                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Олександр"
                   className="bg-[#F5F5F5] border-none rounded-sm px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
                 />
@@ -130,7 +176,8 @@ const ContactPage: React.FC = () => {
                 <label className="text-[11px] font-bold uppercase text-gray-400 ml-1">Ваш Email</label>
                 <input
                   type="email"
-                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                   placeholder="example@mail.com"
                   className="bg-[#F5F5F5] border-none rounded-sm px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
                 />
@@ -140,7 +187,11 @@ const ContactPage: React.FC = () => {
                 <input
                   type="tel"
                   required
+                  value={formData.phone}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                   placeholder="+380"
+                  maxLength={16}
+                  inputMode="tel"
                   className="bg-[#F5F5F5] border-none rounded-sm px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
                 />
               </div>
@@ -148,6 +199,8 @@ const ContactPage: React.FC = () => {
                 <label className="text-[11px] font-bold uppercase text-gray-400 ml-1">Тема</label>
                 <input
                   type="text"
+                  value={formData.subject}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))}
                   placeholder="Запитання щодо товару"
                   className="bg-[#F5F5F5] border-none rounded-sm px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
                 />
@@ -155,7 +208,8 @@ const ContactPage: React.FC = () => {
               <div className="flex flex-col gap-2 md:col-span-2">
                 <label className="text-[11px] font-bold uppercase text-gray-400 ml-1">Повідомлення</label>
                 <textarea
-                  required
+                  value={formData.message}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, message: e.target.value }))}
                   placeholder="Напишіть ваше повідомлення тут..."
                   rows={5}
                   className="bg-[#F5F5F5] border-none rounded-sm px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none transition-all"
@@ -165,6 +219,7 @@ const ContactPage: React.FC = () => {
               <div className="md:col-span-2 mt-4">
                 <button
                   type="submit"
+                  disabled={status === 'loading'}
                   className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-[13px] px-10 py-4 rounded-sm shadow-md hover:shadow-lg transition-all w-full md:w-auto tracking-widest"
                 >
                   Відправити повідомлення
@@ -214,9 +269,25 @@ const ContactPage: React.FC = () => {
           </div>
         </div>
       </div>
+      {toast && (
+        <div
+          className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded shadow-lg text-sm text-white ${
+            toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+          }`}
+        >
+          {toast.message}
+          <button
+            type="button"
+            className="ml-3 text-white/80 hover:text-white"
+            onClick={() => setToast(null)}
+            aria-label="Закрити сповіщення"
+          >
+            ×
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
 export default ContactPage;
-

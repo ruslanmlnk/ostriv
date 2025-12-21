@@ -16,6 +16,9 @@ export const createOrderRequest = async (orderData: OrderData): Promise<{ succes
     return {
       product: Number.isFinite(numericId) ? numericId : productId,
       quantity: item.quantity,
+      colorTitle: item.colorTitle,
+      colorSlug: item.colorSlug,
+      colorHex: item.colorHex,
     }
   })
 

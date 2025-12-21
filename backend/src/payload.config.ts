@@ -12,6 +12,8 @@ import { Products } from './collections/Products'
 import { Orders } from './collections/Orders'
 import { Colors } from './collections/Colors'
 import { Brands } from './collections/Brands'
+import { ContactRequests } from './collections/ContactRequests'
+import { sql } from '@payloadcms/db-postgres'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -23,7 +25,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Categories, Products, Orders, Colors, Brands],
+  collections: [Users, Media, Categories, Products, Orders, Colors, Brands, ContactRequests],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -42,6 +44,15 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URI || '',
     },
   }),
+  onInit: async (payload) => {
+    try {
+      await payload.db.drizzle?.execute(
+        sql`ALTER TABLE "payload_locked_documents_rels" ADD COLUMN IF NOT EXISTS "contact_requests_id" integer;`,
+      );
+    } catch (error) {
+      payload.logger.error({ msg: 'Failed to ensure contact_requests lock column', err: error });
+    }
+  },
   sharp,
   plugins: [],
 })

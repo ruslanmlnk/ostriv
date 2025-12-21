@@ -60,6 +60,10 @@ export interface CartItem {
   quantity: number;
   image: string;
   stock?: number;
+  cartKey?: string;
+  colorTitle?: string;
+  colorSlug?: string;
+  colorHex?: string;
 }
 
 export interface OrderData {
@@ -78,6 +82,9 @@ export interface OrderData {
   items: {
     product_id: string | number;
     quantity: number;
+    colorTitle?: string;
+    colorSlug?: string;
+    colorHex?: string;
   }[];
   total: number;
 }

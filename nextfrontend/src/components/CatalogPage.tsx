@@ -268,9 +268,9 @@ const CatalogPage: React.FC<CatalogPageProps> = ({
           </div>
 
           <div className="flex justify-center mt-12">
-            <button className="bg-amber-400 text-white font-bold uppercase text-xs px-8 py-3 rounded-sm hover:bg-amber-500 transition-colors shadow-md hover:shadow-lg">
+            {/* <button className="bg-amber-400 text-white font-bold uppercase text-xs px-8 py-3 rounded-sm hover:bg-amber-500 transition-colors shadow-md hover:shadow-lg">
               Показати ще
-            </button>
+            </button> */}
           </div>
         </main>
       </div>

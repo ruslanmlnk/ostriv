@@ -35,10 +35,18 @@ const stripModelFromName = (name: string, model: string) => {
   return stripped || trimmedName;
 };
 
+const buildCartKey = (id: string | number, colorSlug?: string, colorTitle?: string) => {
+  const colorKey = (colorSlug || colorTitle || 'default').trim().toLowerCase() || 'default';
+  return `${id}::${colorKey}`;
+};
+
 const normalizeCartItem = (item: CartItem): CartItem => {
   const quantity = Math.max(1, Number(item.quantity) || 1);
   const stock = normalizeStock(item.stock);
   const clampedQuantity = typeof stock === 'number' ? Math.min(quantity, stock) : quantity;
+  const colorSlug = item.colorSlug?.trim?.().toLowerCase?.();
+  const colorTitle = item.colorTitle?.trim?.();
+  const cartKey = item.cartKey?.trim?.() || buildCartKey(item.id, colorSlug, colorTitle);
 
   return {
     ...item,
@@ -46,6 +54,10 @@ const normalizeCartItem = (item: CartItem): CartItem => {
     quantity: clampedQuantity,
     name: stripModelFromName(item.name, item.model),
     model: item.model?.trim?.() ?? String(item.model ?? ''),
+    colorSlug: colorSlug || undefined,
+    colorTitle: colorTitle || undefined,
+    colorHex: item.colorHex?.trim?.() || undefined,
+    cartKey,
   };
 };
 
@@ -75,7 +87,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return prev;
       }
 
-      const existing = prev.find(item => item.id === normalizedNewItem.id);
+      const existing = prev.find(
+        item =>
+          item.cartKey === normalizedNewItem.cartKey ||
+          (item.id === normalizedNewItem.id &&
+            (item.colorSlug || '') === (normalizedNewItem.colorSlug || '') &&
+            (item.colorTitle || '') === (normalizedNewItem.colorTitle || ''))
+      );
       if (existing) {
         const mergedStock = typeof normalizedNewItem.stock === 'number' ? normalizedNewItem.stock : existing.stock;
         const maxStock = typeof mergedStock === 'number' ? mergedStock : undefined;
@@ -101,14 +119,15 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const removeFromCart = (id: number | string) => {
-    setItems(prev => prev.filter(item => item.id !== id));
+    setItems(prev => prev.filter(item => item.cartKey !== id && item.id !== id));
   };
 
   const updateQuantity = (id: number | string, delta: number) => {
     setItems(prev =>
       prev
         .map((item) => {
-          if (item.id !== id) return item;
+          const matches = item.cartKey ? item.cartKey === id : item.id === id;
+          if (!matches) return item;
 
           const stock = normalizeStock(item.stock);
           const next = item.quantity + delta;

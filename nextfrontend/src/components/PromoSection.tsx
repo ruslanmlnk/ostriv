@@ -1,9 +1,42 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import UiImage from './UiImage';
 
 const PromoSection: React.FC = () => {
+  const [phone, setPhone] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedPhone = phone.trim();
+    if (!trimmedPhone) {
+      setStatus('error');
+      return;
+    }
+
+    setStatus('loading');
+    try {
+      const res = await fetch('/api/contact-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: trimmedPhone,
+          source: 'promo-consultation',
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed');
+      setStatus('success');
+      setPhone('');
+      setToast({ message: 'Запит на консультацію надіслано!', type: 'success' });
+    } catch {
+      setStatus('error');
+      setToast({ message: 'Не вдалося надіслати. Перевірте номер і спробуйте ще раз.', type: 'error' });
+    }
+  };
+
   return (
     <section className="bg-gray-100 py-16 my-10">
       <div className="w-full max-w-[1352px] mx-auto px-4 flex flex-col md:flex-row items-stretch">
@@ -18,15 +51,29 @@ const PromoSection: React.FC = () => {
                 Заповніть форму і ми вам зателефонуємо
             </p>
             
-            <form className="flex gap-2 max-w-md">
+            <form className="flex flex-col sm:flex-row gap-2 max-w-md" onSubmit={handleSubmit}>
                 <input 
-                    type="phone" 
+                    type="tel" 
                     placeholder="Введіть ваш телефон" 
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    maxLength={16}
+                    inputMode="tel"
                     className="flex-1 bg-white border border-gray-300 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-amber-500"
                 />
-                <button type="submit" className="bg-amber-400 hover:bg-amber-500 text-white font-bold uppercase text-xs px-6 py-3 rounded-sm transition-colors">
+                <button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  className="bg-amber-400 hover:bg-amber-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold uppercase text-xs px-6 py-3 rounded-sm transition-colors"
+                >
                     Відправити
                 </button>
+                {status === 'success' && (
+                  <span className="text-xs text-green-600 font-semibold ml-1">Дякуємо, ми зв'яжемося!</span>
+                )}
+                {status === 'error' && (
+                  <span className="text-xs text-red-500 font-semibold ml-1">Перевірте телефон і спробуйте ще раз.</span>
+                )}
             </form>
         </div>
 
@@ -43,6 +90,23 @@ const PromoSection: React.FC = () => {
         </div>
 
       </div>
+      {toast && (
+        <div
+          className={`fixed bottom-4 right-4 z-50 px-4 py-3 rounded shadow-lg text-sm text-white ${
+            toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+          }`}
+        >
+          {toast.message}
+          <button
+            type="button"
+            className="ml-3 text-white/80 hover:text-white"
+            onClick={() => setToast(null)}
+            aria-label="Закрити сповіщення"
+          >
+            ×
+          </button>
+        </div>
+      )}
     </section>
   );
 };

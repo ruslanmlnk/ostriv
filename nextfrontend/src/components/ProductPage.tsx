@@ -19,6 +19,10 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
   const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [selectedColorSlug, setSelectedColorSlug] = useState<string | undefined>(() => {
+    const first = Array.isArray(product.colors) && product.colors.length > 0 ? product.colors[0] : null;
+    return first ? (first.slug || first.title || undefined) : undefined;
+  });
   const { navigateTo } = useNavigation();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
@@ -32,6 +36,8 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
   useEffect(() => {
     setActiveImageIndex(0);
     setQuantity(1);
+    const first = Array.isArray(product.colors) && product.colors.length > 0 ? product.colors[0] : null;
+    setSelectedColorSlug(first ? (first.slug || first.title || undefined) : undefined);
   }, [product.id]);
 
   useEffect(() => {
@@ -53,9 +59,17 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
     setQuantity((prev) => (prev < stockCount ? prev + 1 : prev));
   };
 
+  const getSelectedColor = () => {
+    if (!Array.isArray(product.colors)) return undefined;
+    return product.colors.find(
+      (c) => (c.slug || c.title) && (c.slug === selectedColorSlug || c.title === selectedColorSlug),
+    );
+  };
+
   const handleAddToCart = () => {
     if (!isInStock) return;
     const safeQuantity = Math.max(1, Math.min(quantity, stockCount));
+    const color = getSelectedColor();
     addToCart({
       id: currentProductId,
       name: product.name,
@@ -64,6 +78,9 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
       quantity: safeQuantity,
       image: getImageUrl(product.image),
       stock: stockCount,
+      colorTitle: color?.title,
+      colorSlug: color?.slug || color?.title,
+      colorHex: typeof color?.hex === 'string' ? color.hex : undefined,
     });
   };
 
@@ -221,23 +238,29 @@ const ProductPage: React.FC<ProductPageProps> = ({ product }) => {
                   <span className="text-[13px] font-bold uppercase text-[#282828] block mb-3">
                     ВИБЕРІТЬ КОЛІР
                   </span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {product.colors && product.colors.length > 0 ? (
-                      product.colors.map((color) => {
-                        const rawHex = typeof color.hex === 'string' ? color.hex.trim() : '';
-                        const hex = /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(rawHex) ? rawHex : '#E0E0E0';
-                        return (
-                          <button
-                            key={String(color.id ?? color.slug ?? color.title)}
-                            type="button"
-                            title={color.title}
-                            aria-label={color.title}
-                            className="w-8 h-8 rounded-full border border-gray-200 hover:border-amber-400 focus:border-amber-400 outline-none transition-colors"
-                            style={{ backgroundColor: hex }}
-                          />
-                        );
-                      })
-                    ) : (
+                <div className="flex flex-wrap items-center gap-2">
+                  {product.colors && product.colors.length > 0 ? (
+                    product.colors.map((color) => {
+                      const rawHex = typeof color.hex === 'string' ? color.hex.trim() : '';
+                      const hex = /^#(?:[0-9a-fA-F]{3}){1,2}$/.test(rawHex) ? rawHex : '#E0E0E0';
+                      const isActive = selectedColorSlug === (color.slug || color.title);
+                      return (
+                        <button
+                          key={String(color.id ?? color.slug ?? color.title)}
+                          type="button"
+                          title={color.title}
+                          aria-label={color.title}
+                          onClick={() => setSelectedColorSlug(color.slug || color.title)}
+                          className={`w-8 h-8 rounded-full border outline-none transition-colors ${
+                            isActive
+                              ? 'border-amber-500 ring-2 ring-amber-200'
+                              : 'border-gray-200 hover:border-amber-400 focus:border-amber-400'
+                          }`}
+                          style={{ backgroundColor: hex }}
+                        />
+                      );
+                    })
+                  ) : (
                       <span className="text-sm text-gray-400">—</span>
                     )}
                   </div>
